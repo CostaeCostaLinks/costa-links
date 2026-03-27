@@ -5,7 +5,6 @@ import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Logo from '@/components/Logo';
 import { toast } from 'sonner';
-// CORREÇÃO AQUI: Adicionado ArrowRight aos imports
 import { ArrowLeft, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function Login() {
@@ -60,7 +59,6 @@ export default function Login() {
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full mix-blend-screen filter blur-[128px] opacity-40 animate-pulse"></div>
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full mix-blend-screen filter blur-[128px] opacity-30 animate-pulse"></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
       </div>
 
       <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-slate-400 hover:text-white font-medium transition-colors z-20 group">
