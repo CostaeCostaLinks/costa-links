@@ -1,10 +1,11 @@
+// src/pages/admin/AppearancePage.tsx
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Profile, Link as LinkType } from '@/types';
 import Input from '@/components/Input';
 import { toast } from 'sonner';
-import { Upload, Crown, Search, Save, XCircle, Link as LinkIcon, Copy, Eye, X, Lock } from 'lucide-react';
+import { Upload, Crown, Search, Save, XCircle, Link as LinkIcon, Copy, Eye, X } from 'lucide-react';
 import { useAdminContext } from '@/layouts/AdminLayout';
 import { Link as RouterLink } from 'react-router-dom';
 import PreviewPhone from '@/components/PreviewPhone';
@@ -72,7 +73,7 @@ export default function AppearancePage() {
     if (data) setLinks(data);
   };
 
-  // --- SALVAMENTO BLINDADO COM FALLBACK ---
+  // --- SALVAMENTO BLINDADO: Envia apenas colunas que existem no banco ---
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -95,24 +96,28 @@ export default function AppearancePage() {
         }
       }
 
-      // 2. Tenta salvar COMPLETO
-      const fullUpdates = { ...customization };
-      delete fullUpdates.id;
-      delete fullUpdates.updated_at;
-      delete fullUpdates.email;
-      delete fullUpdates.plan; // Protege o plano
+      // 2. Filtra as colunas para evitar o erro 400 do Supabase
+      const validColumns = [
+        'username', 'full_name', 'avatar_url', 'bio', 'theme_color', 'background_color',
+        'text_color', 'button_color', 'button_text_color', 'font_family', 'banner_url',
+        'title_font_family', 'title_color', 'bio_color', 'button_border_color',
+        'use_gradient', 'gradient_from', 'gradient_to', 'icon_color', 'font_size',
+        'button_border_width', 'title_font_size', 'bio_font_size', 'display_banner',
+        'highlight_first_link', 'page_link_url'
+      ];
 
-      const { error } = await supabase.from('profiles').update(fullUpdates).eq('id', user!.id);
+      const safeUpdates: any = {};
+      for (const key of validColumns) {
+        if (customization[key] !== undefined) {
+          safeUpdates[key] = customization[key];
+        }
+      }
+
+      // 3. Salva os dados limpos
+      const { error } = await supabase.from('profiles').update(safeUpdates).eq('id', user!.id);
 
       if (error) {
-          console.warn("Erro ao salvar completo, tentando salvar sem 'display_branding'...", error);
-          
-          // 3. Fallback: Se der erro, tenta salvar SEM a coluna nova que pode não existir
-          const safeUpdates = { ...fullUpdates };
-          delete safeUpdates.display_branding; 
-
-          const { error: error2 } = await supabase.from('profiles').update(safeUpdates).eq('id', user!.id);
-          if (error2) throw error2;
+        throw error;
       }
       
       toast.success('Alterações salvas!');
@@ -120,8 +125,8 @@ export default function AppearancePage() {
       triggerPreviewRefresh();
 
     } catch (e: any) { 
-        console.error("ERRO FATAL AO SALVAR:", e);
-        toast.error('Erro ao salvar. Verifique se todas as colunas existem no Supabase.');
+        console.error("ERRO AO SALVAR:", e);
+        toast.error('Erro ao salvar. Tente novamente.', { description: e.message });
     } finally {
         setLoading(false);
     }
@@ -228,7 +233,7 @@ export default function AppearancePage() {
                     </div>
                     <div className="flex gap-4">
                         <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-600 overflow-hidden relative shrink-0">
-                            {customization.avatar_url ? <img src={customization.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl text-slate-500">{profile?.username?.[0].toUpperCase()}</div>}
+                            {customization.avatar_url ? <img src={customization.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl text-slate-500">{profile?.username?.[0]?.toUpperCase()}</div>}
                             <label className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer"><Upload className="w-5 h-5 text-white" /><input type="file" className="hidden" accept="image/*" onChange={(e) => handleUpload(e, 'avatar_url')} disabled={uploading} /></label>
                         </div>
                         <div className="flex-1 space-y-1"><label className="text-xs text-slate-400">Bio</label><Input value={customization.bio || ''} onChange={(e) => setCustomization({...customization, bio: e.target.value})} className="h-9 text-sm bg-slate-900 border-slate-700 text-white" /></div>
@@ -267,10 +272,20 @@ export default function AppearancePage() {
                                 <span className="text-xs text-slate-500 flex items-center gap-1">Gradiente {!isPremium && <ProBadge />} <input type="checkbox" checked={customization.use_gradient} onChange={(e) => setCustomization({...customization, use_gradient: e.target.checked})} className="toggle toggle-xs accent-yellow-500" /></span>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div><label className="text-xs font-bold text-slate-500 mb-1 block">Cor Botão</label><input type="color" value={customization.button_color || '#EAB308'} onChange={e => setCustomization({...customization, button_color: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
+                        
+                        {/* ALTERAÇÃO AQUI: Mostra Cores do Gradiente se marcado, ou Cor Sólida se desmarcado */}
+                        <div className={`grid ${customization.use_gradient ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
+                            {customization.use_gradient ? (
+                                <>
+                                    <div><label className="text-xs font-bold text-slate-500 mb-1 block">Gradiente 1</label><input type="color" value={customization.gradient_from || '#EAB308'} onChange={e => setCustomization({...customization, gradient_from: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
+                                    <div><label className="text-xs font-bold text-slate-500 mb-1 block">Gradiente 2</label><input type="color" value={customization.gradient_to || '#CA8A04'} onChange={e => setCustomization({...customization, gradient_to: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
+                                </>
+                            ) : (
+                                <div><label className="text-xs font-bold text-slate-500 mb-1 block">Cor Botão</label><input type="color" value={customization.button_color || '#EAB308'} onChange={e => setCustomization({...customization, button_color: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
+                            )}
                             <div><label className="text-xs font-bold text-slate-500 mb-1 block">Cor Texto</label><input type="color" value={customization.button_text_color || '#000000'} onChange={e => setCustomization({...customization, button_text_color: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
                         </div>
+
                         <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-4">
                              <div>
                                  <label className="text-xs font-bold text-slate-500 block mb-1">Cor do Ícone</label>

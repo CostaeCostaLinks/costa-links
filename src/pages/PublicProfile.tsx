@@ -1,3 +1,4 @@
+// src/pages/PublicProfile.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -65,15 +66,34 @@ export default function PublicProfile() {
     titleFont: profile.title_font_family || 'Inter'
   };
 
+  // --- CORREÇÃO DA LÓGICA DE ESTILOS DOS BOTÕES ---
   const getButtonStyle = (index: number) => {
     const isHighlight = profile.highlight_first_link && index === 0;
-    const baseStyle = { fontFamily: styles.font, borderStyle: 'solid', fontSize: '1rem' };
+    const baseStyle = { 
+        fontFamily: styles.font, 
+        fontSize: '1rem',
+        borderStyle: 'solid',
+    };
 
     if (isHighlight) {
-        return { ...baseStyle, backgroundColor: profile.button_color || '#EAB308', color: profile.button_text_color || '#000000', borderWidth: '0px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', transform: 'scale(1.02)' };
+        return { 
+            ...baseStyle, 
+            backgroundColor: profile.button_color || '#EAB308', 
+            color: profile.button_text_color || '#000000', 
+            borderWidth: '0px', 
+            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', 
+            transform: 'scale(1.02)' 
+        };
     }
+
     if (profile.use_gradient) {
-      return { ...baseStyle, color: profile.button_text_color || '#000000', borderWidth: '0px', background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` };
+      return { 
+          ...baseStyle, 
+          color: profile.button_text_color || '#000000', 
+          borderWidth: profile.button_border_width || '0px',
+          borderColor: profile.button_border_color || 'transparent',
+          background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` 
+      };
     }
     
     const isGhost = profile.highlight_first_link && index !== 0;
@@ -192,7 +212,11 @@ export default function PublicProfile() {
             {links.map((link, index) => {
                 const Icon = getIconComponent(link.icon || 'link');
                 const isGhost = profile.highlight_first_link && index !== 0;
-                const iconColor = isGhost ? styles.titleColor : (profile.button_text_color || '#000000');
+                
+                // --- CORREÇÃO NA COR DO ÍCONE ---
+                let iconColor = profile.icon_color || profile.button_text_color || '#000000';
+                if (isGhost) iconColor = profile.title_color || '#FFFFFF';
+                // ---------------------------------
 
                 return (
                 <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="block group transition-transform hover:scale-[1.02] active:scale-95">
