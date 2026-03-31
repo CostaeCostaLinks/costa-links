@@ -1,102 +1,155 @@
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
-import Button from '@/components/Button';
-import Input from '@/components/Input';
-import { toast } from 'sonner';
-import { User, Lock, CreditCard, ExternalLink } from 'lucide-react';
+// src/pages/admin/SettingsPage.tsx
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client'; // Agora com o alias '@/' correto
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
-const STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/8x25kF5178LYfWXe1TfMA00";
+const SettingsPage = () => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const { toast } = useToast();
 
-export default function SettingsPage() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
+  useEffect(() => {
+    getProfile();
+  }, []);
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  async function getProfile() {
     try {
-      const { error } = await supabase.auth.updateUser({ data: { full_name: fullName } });
-      await supabase.from('profiles').update({ full_name: fullName }).eq('id', user!.id);
-      if (error) throw error;
-      toast.success('Perfil atualizado!');
-    } catch (error: any) { toast.error(error.message); } finally { setLoading(false); }
-  };
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) return toast.error('As senhas não coincidem');
-    if (password.length < 6) return toast.error('A senha deve ter no mínimo 6 caracteres');
-    setLoading(true);
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, username, bio, avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setFullName(data.full_name || '');
+          setUsername(data.username || '');
+          setBio(data.bio || '');
+          setAvatarUrl(data.avatar_url || '');
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao carregar perfil',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function updateProfile() {
     try {
-      const { error } = await supabase.auth.updateUser({ password: password });
-      if (error) throw error;
-      toast.success('Senha alterada com sucesso!');
-      setPassword(''); setConfirmPassword('');
-    } catch (error: any) { toast.error(error.message); } finally { setLoading(false); }
-  };
+      setSaving(true);
+      const { data: { user } } = await supabase.auth.getUser();
 
-  const inputDarkClass = "bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 focus:border-yellow-500";
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const updates = {
+        id: user.id,
+        full_name: fullName, // ESTA FOI A ÚNICA LINHA ADICIONADA (O motivo de tudo isso!)
+        username,
+        bio,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase.from('profiles').upsert(updates);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Perfil atualizado!',
+        description: 'Suas informações foram salvas com sucesso.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao atualizar perfil',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-in fade-in duration-500">
-      
-      {/* TÍTULO DA PÁGINA (Adicionado manualmente já que removemos do layout) */}
-      <h1 className="text-3xl font-serif font-bold text-white mb-8">Configurações da Conta</h1>
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Configurações do Perfil</h1>
+        <p className="text-muted-foreground">
+          Gerencie suas informações públicas e configurações de conta.
+        </p>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* COLUNA ESQUERDA (2/3): Formulários */}
-        <div className="lg:col-span-2 space-y-8">
-          <section className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-800">
-              <div className="p-2 bg-slate-950 rounded-lg border border-slate-800"><User className="w-5 h-5 text-yellow-500" /></div>
-              <div><h2 className="text-lg font-bold text-white">Dados Pessoais</h2><p className="text-sm text-slate-400">Atualize como você aparece na plataforma.</p></div>
-            </div>
-            <form onSubmit={handleUpdateProfile} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                  <Input label="E-mail" value={user?.email} disabled className="bg-slate-950 border-slate-800 text-slate-500 opacity-60 cursor-not-allowed" />
-                  <Input label="Nome Completo" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputDarkClass} />
-              </div>
-              <div className="flex justify-end"><Button type="submit" disabled={loading} className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold px-8 shadow-lg shadow-yellow-500/10">Salvar Alterações</Button></div>
-            </form>
-          </section>
-
-          <section className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-800">
-              <div className="p-2 bg-slate-950 rounded-lg border border-slate-800"><Lock className="w-5 h-5 text-yellow-500" /></div>
-              <div><h2 className="text-lg font-bold text-white">Segurança</h2><p className="text-sm text-slate-400">Mantenha sua conta protegida.</p></div>
-            </div>
-            <form onSubmit={handleChangePassword} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                  <Input type="password" label="Nova Senha" value={password} onChange={(e) => setPassword(e.target.value)} className={inputDarkClass} />
-                  <Input type="password" label="Confirmar Senha" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputDarkClass} />
-              </div>
-              <div className="flex justify-end"><Button type="submit" variant="secondary" disabled={loading} className="bg-slate-950 hover:bg-slate-800 text-white border border-slate-800 px-8">Atualizar Senha</Button></div>
-            </form>
-          </section>
-        </div>
-
-        {/* COLUNA DIREITA (1/3): Assinatura */}
-        <div className="lg:col-span-1 sticky top-8">
-          <section className="bg-gradient-to-b from-slate-900 to-slate-950 p-8 rounded-3xl text-white shadow-xl border border-slate-800 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl group-hover:bg-yellow-500/10 transition-colors"></div>
-            <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm"><CreditCard className="w-6 h-6 text-yellow-500" /></div>
-                  <div><h2 className="text-xl font-bold">Assinatura</h2><p className="text-slate-400 text-sm">Gerencie faturas e plano</p></div>
-                </div>
-                <div className="space-y-6">
-                  <p className="text-slate-300 text-sm leading-relaxed">Acesse o portal do cliente para baixar suas notas fiscais, trocar o cartão de crédito ou cancelar a assinatura a qualquer momento.</p>
-                  <button onClick={() => window.open(STRIPE_PORTAL_URL, '_blank')} className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-yellow-500/20">Acessar Portal do Cliente <ExternalLink className="w-4 h-4" /></button>
-                  <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-4 border-t border-white/5"><Lock className="w-3 h-3" /> Pagamentos seguros via Stripe</div>
-                </div>
-            </div>
-          </section>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações Públicas</CardTitle>
+          <CardDescription>
+            Essas informações serão visíveis para qualquer pessoa que visitar sua página.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="fullName" className="text-sm font-medium">Nome Completo</label>
+            <Input
+              id="fullName"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Seu nome"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-sm font-medium">Nome de Usuário</label>
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="seu_usuario"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="bio" className="text-sm font-medium">Bio</label>
+            <Textarea
+              id="bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Conte um pouco sobre você..."
+              className="h-24"
+            />
+          </div>
+          <Button onClick={updateProfile} disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Salvar Alterações
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default SettingsPage;
