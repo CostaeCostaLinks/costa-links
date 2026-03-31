@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+// src/pages/admin/LinksPage.tsx
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Link as LinkType } from '@/types';
@@ -10,7 +11,7 @@ import Button from '@/components/Button';
 import { useAdminContext } from '@/layouts/AdminLayout';
 import { Link as RouterLink } from 'react-router-dom';
 import PreviewPhone from '@/components/PreviewPhone';
-import OnboardingProgress from '@/components/OnboardingProgress'; // <--- IMPORTADO AQUI
+import OnboardingProgress from '@/components/OnboardingProgress';
 
 export default function LinksPage() {
   const { user } = useAuth();
@@ -22,6 +23,10 @@ export default function LinksPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [showIcons, setShowIcons] = useState(false);
+
+  // --- REFS PARA O DRAG AND DROP ---
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
 
   useEffect(() => {
     if (user) loadLinks();
@@ -79,6 +84,41 @@ export default function LinksPage() {
     toast.success('Link copiado!');
   };
 
+  // --- FUNÇÃO DE REORDENAÇÃO (DRAG AND DROP) ---
+  const handleSort = async () => {
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    if (dragItem.current === dragOverItem.current) return; // Não mudou de lugar
+
+    // 1. Reordena localmente no array
+    const _links = [...links];
+    const draggedItemContent = _links.splice(dragItem.current, 1)[0];
+    _links.splice(dragOverItem.current, 0, draggedItemContent);
+
+    // 2. Atualiza o order_index de cada item baseado na nova posição
+    const updatedLinks = _links.map((link, index) => ({ ...link, order_index: index }));
+    
+    // 3. Atualiza a tela imediatamente (Optimistic UI)
+    setLinks(updatedLinks);
+    triggerPreviewRefresh();
+
+    // Resetando os ponteiros
+    dragItem.current = null;
+    dragOverItem.current = null;
+
+    // 4. Salva as novas posições no Supabase em background
+    try {
+      await Promise.all(
+        updatedLinks.map(link => 
+          supabase.from('links').update({ order_index: link.order_index }).eq('id', link.id)
+        )
+      );
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Erro ao salvar a nova ordem dos links');
+      loadLinks(); // Se der erro, recarrega a ordem original do banco
+    }
+  };
+
   if (loading) return <div className="text-slate-400 p-8 text-center">Carregando...</div>;
   const publicUrl = `${window.location.origin}/u/${username}`;
 
@@ -130,12 +170,39 @@ export default function LinksPage() {
             )}
 
             <div className="space-y-3">
-                {links.map((link) => {
+                {links.map((link, index) => {
                 const Icon = getIconComponent(link.icon || 'link');
                 return (
-                    <div key={link.id} className="group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm hover:border-yellow-500/50 transition-all flex items-center justify-between">
-                    <div className="flex items-center gap-4 overflow-hidden"><div className="cursor-move text-slate-500 hover:text-white"><GripVertical className="w-5 h-5" /></div><div className="p-2 bg-slate-950 rounded-lg text-yellow-500 border border-slate-800"><Icon className="w-5 h-5" /></div><div className="flex-1 min-w-0"><h3 className="font-bold text-white truncate">{link.title}</h3><p className="text-xs text-slate-400 truncate">{link.url}</p></div></div>
-                    <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => startEditing(link)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"><Pencil className="w-4 h-4" /></button><button onClick={() => handleDelete(link.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"><Trash2 className="w-4 h-4" /></button></div>
+                    <div 
+                      key={link.id} 
+                      draggable
+                      onDragStart={() => (dragItem.current = index)}
+                      onDragEnter={() => (dragOverItem.current = index)}
+                      onDragEnd={handleSort}
+                      onDragOver={(e) => e.preventDefault()}
+                      className="group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm hover:border-yellow-500/50 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing"
+                    >
+                      <div className="flex items-center gap-4 overflow-hidden">
+                          <div className="text-slate-500 group-hover:text-yellow-500 transition-colors">
+                            <GripVertical className="w-5 h-5" />
+                          </div>
+                          <div className="p-2 bg-slate-950 rounded-lg text-yellow-500 border border-slate-800">
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-white truncate">{link.title}</h3>
+                            <p className="text-xs text-slate-400 truncate">{link.url}</p>
+                          </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => startEditing(link)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(link.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                      </div>
                     </div>
                 );
                 })}
