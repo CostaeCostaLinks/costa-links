@@ -21,10 +21,26 @@ const FAQS = [
   }
 ];
 
+// 1. ADICIONADO O CAMPO "link" AQUI NO ARRAY
 const TUTORIALS = [
-  { title: "Primeiros Passos: Criando sua conta", duration: "2 min", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&q=80" },
-  { title: "Personalizando cores e fontes", duration: "3 min", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&q=80" },
-  { title: "Adicionando botão de WhatsApp", duration: "1 min", image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&q=80" },
+  { 
+    title: "Primeiros Passos: Criando sua conta", 
+    duration: "2 min", 
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&q=80",
+    link: "https://youtu.be/sSiM-VP6WLU" // Seu link do YouTube inserido aqui!
+  },
+  { 
+    title: "Personalizando cores e fontes", 
+    duration: "3 min", 
+    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&q=80",
+    link: "https://youtu.be/a04sP5ADHhE" // Troque pelo link do YouTube quando o vídeo estiver pronto
+  },
+  { 
+    title: "Adicionando botão de WhatsApp", 
+    duration: "1 min", 
+    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&q=80",
+    link: "https://youtu.be/nOaD9y19pY8" // Troque pelo link do YouTube quando o vídeo estiver pronto
+  },
 ];
 
 export default function Help() {
@@ -59,24 +75,31 @@ export default function Help() {
                     <PlayCircle className="w-6 h-6 text-yellow-500" /> Tutoriais Rápidos
                 </h3>
                 <div className="space-y-4">
+                    {/* 2. MUDAMOS A <div> PARA <a> PARA TORNAR CLICÁVEL */}
                     {TUTORIALS.map((t, i) => (
-                        <div key={i} className="group flex items-center gap-4 bg-slate-900/50 border border-white/5 p-3 rounded-2xl hover:border-yellow-500/30 transition-all cursor-pointer">
+                        <a 
+                            key={i} 
+                            href={t.link} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="group flex items-center gap-4 bg-slate-900/50 border border-white/5 p-3 rounded-2xl hover:border-yellow-500/30 transition-all cursor-pointer"
+                        >
                             <div className="w-20 h-14 rounded-lg overflow-hidden relative bg-black">
-                                <img src={t.image} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                                <img src={t.image} alt={t.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
                                 <div className="absolute inset-0 flex items-center justify-center"><PlayCircle className="w-6 h-6 text-white opacity-80" /></div>
                             </div>
                             <div>
                                 <h4 className="font-bold text-slate-200 group-hover:text-yellow-500 transition-colors text-sm">{t.title}</h4>
                                 <span className="text-xs text-slate-500">{t.duration} • Vídeo Aula</span>
                             </div>
-                        </div>
+                        </a>
                     ))}
                 </div>
 
                 <div className="mt-8 p-6 bg-gradient-to-br from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-3xl">
                     <h4 className="font-bold text-yellow-500 mb-2">Precisa de suporte humano?</h4>
                     <p className="text-sm text-slate-400 mb-4">Nossa equipe está pronta para te ajudar a configurar sua bio.</p>
-                    <a href="mailto:costaecostalibrary@gmail.com" className="inline-flex items-center gap-2 bg-yellow-500 text-slate-900 px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-400 transition-colors">
+                    <a href="mailto:contato.biolinks@costalinks.com.br" className="inline-flex items-center gap-2 bg-yellow-500 text-slate-900 px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-400 transition-colors">
                         <MessageCircle className="w-4 h-4" /> Falar com Suporte
                     </a>
                 </div>

@@ -152,7 +152,7 @@ export default function PublicLayout() {
               <ul className="space-y-2 text-sm text-slate-500">
                 <li><Link to="/termos" className="hover:text-yellow-500 transition-colors">Termos de Uso</Link></li>
                 <li><Link to="/privacidade" className="hover:text-yellow-500 transition-colors">Privacidade</Link></li>
-                <li><a href="mailto:costaecostalibrary@gmail.com" className="hover:text-yellow-500 transition-colors">Contato</a></li>
+                <li><a href="mailto:contato.biolinks@costalinks.com.br" className="hover:text-yellow-500 transition-colors">Contato</a></li>
               </ul>
             </div>
           </div>

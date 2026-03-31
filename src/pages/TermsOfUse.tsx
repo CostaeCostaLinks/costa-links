@@ -94,8 +94,8 @@ export default function TermsOfUse() {
                 <section className="pt-6 border-t border-white/10">
                     <h2 className="text-xl font-bold text-white mb-3">9. CONTATO</h2>
                     <p>Para dúvidas, solicitações ou informações relacionadas aos Termos de Uso, entre em contato:</p>
-                    <a href="mailto:costaecostalibrary@gmail.com" className="text-yellow-500 hover:text-yellow-400 font-bold mt-2 inline-block transition-colors">
-                        📩 costaecostalibrary@gmail.com
+                    <a href="mailto:contato.biolinks@costalinks.com.br" className="text-yellow-500 hover:text-yellow-400 font-bold mt-2 inline-block transition-colors">
+                        📩 contato.biolinks@costalinks.com.br
                     </a>
                 </section>
 

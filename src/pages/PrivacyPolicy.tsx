@@ -115,8 +115,8 @@ export default function PrivacyPolicy() {
                 <section className="pt-6 border-t border-white/10">
                     <h2 className="text-xl font-bold text-white mb-3">9. CONTATO PARA PRIVACIDADE</h2>
                     <p>Se tiver alguma dúvida sobre como tratamos seus dados, entre em contato:</p>
-                    <a href="mailto:costaecostalibrary@gmail.com" className="text-green-500 hover:text-green-400 font-bold mt-2 inline-block transition-colors">
-                        📩 costaecostalibrary@gmail.com
+                    <a href="mailto:contato.biolinks@costalinks.com.br" className="text-green-500 hover:text-green-400 font-bold mt-2 inline-block transition-colors">
+                        📩 contato.biolinks@costalinks.com.br
                     </a>
                 </section>
 
