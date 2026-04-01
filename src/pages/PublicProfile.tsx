@@ -220,7 +220,7 @@ export default function PublicProfile() {
 
                 return (
                 <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="block group transition-transform hover:scale-[1.02] active:scale-95">
-                    <div className="relative overflow-hidden rounded-full p-4 flex items-center justify-between shadow-lg" style={getButtonStyle(index)}>
+                    <div className="relative overflow-hidden rounded-full py-6 px-6 flex items-center justify-between shadow-lg" style={getButtonStyle(index)}>
                     <div className="w-6 flex justify-center shrink-0 opacity-90" style={{ color: iconColor }}>
                         <Icon className="w-5 h-5" />
                     </div>

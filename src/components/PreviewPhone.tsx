@@ -45,7 +45,7 @@ export default function PreviewPhone({ profile, links }: PreviewPhoneProps) {
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      padding: '12px 16px',
+      padding: '14px 16px',
       borderRadius: '9999px',
       marginBottom: '12px',
       cursor: 'pointer',
