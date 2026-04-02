@@ -49,7 +49,6 @@ export default function PublicProfile() {
   if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-yellow-500 animate-pulse">Carregando...</div>;
   if (!profile) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Perfil não encontrado 😔</div>;
 
-  // Lógica de Estilos (Mantida)
   const getScale = (size: string | undefined, defaultClass: string) => {
       const map: Record<string, string> = { 'small': 'text-sm', 'medium': 'text-base', 'large': 'text-lg', 'xl': 'text-xl', '2xl': 'text-2xl', '3xl': 'text-3xl', '4xl': 'text-4xl', '5xl': 'text-5xl' };
       return map[size || ''] || defaultClass;
@@ -66,7 +65,6 @@ export default function PublicProfile() {
     titleFont: profile.title_font_family || 'Inter'
   };
 
-  // --- CORREÇÃO DA LÓGICA DE ESTILOS DOS BOTÕES ---
   const getButtonStyle = (index: number) => {
     const isHighlight = profile.highlight_first_link && index === 0;
     const baseStyle = { 
@@ -125,36 +123,56 @@ export default function PublicProfile() {
   };
 
   const hasBanner = profile.banner_url && profile.display_banner !== false;
+  const bannerStyle = profile.banner_style || 'top';
+
+  // Define se o container central terá as bordas de "app" ou será imersivo
+  const containerClasses = bannerStyle === 'expanded'
+    ? 'w-full max-w-[550px] min-h-screen relative z-10 flex flex-col transition-all pt-8' // Sem bordas, sem overflow hidden
+    : 'w-full max-w-[550px] min-h-screen relative z-10 flex flex-col shadow-2xl transition-all border-x border-white/5 md:mt-8 md:rounded-t-[3rem] overflow-hidden'; // Estilo "App/Cartão"
 
   return (
-    <div className="min-h-screen w-full flex justify-center overflow-x-hidden" style={{ backgroundColor: styles.bg }}>
+    <div className="min-h-screen w-full flex justify-center overflow-x-hidden relative" style={{ backgroundColor: styles.bg }}>
       
+      {/* BANNER ESTILO: EXPANDIDO (Imersivo - Fica no fundo da página inteira) */}
+      {bannerStyle === 'expanded' && (
+          <div className="absolute top-0 left-0 w-full h-[400px] md:h-[500px] z-0 pointer-events-none overflow-hidden">
+              {/* Efeito de Brilho (Glow) base - aparece mesmo sem imagem */}
+              <div 
+                  className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full blur-[100px] opacity-20"
+                  style={{ backgroundColor: profile.use_gradient ? profile.gradient_from : (profile.button_color || '#EAB308') }}
+              ></div>
+
+              {/* Se tiver imagem, renderiza ela com opacidade */}
+              {hasBanner && (
+                  <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover opacity-30 mix-blend-screen" />
+              )}
+              
+              {/* O gradiente faz a transição suave para a cor de fundo escolhida */}
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${styles.bg} 70%, ${styles.bg} 100%)` }}></div>
+          </div>
+      )}
+
       {/* CONTAINER CENTRAL */}
-      <div className="w-full max-w-[550px] min-h-screen relative flex flex-col shadow-2xl transition-all border-x border-white/5 md:mt-8 md:rounded-t-[3rem] overflow-hidden" style={{ backgroundColor: styles.bg }}>
+      <div className={containerClasses} style={{ backgroundColor: bannerStyle === 'expanded' ? 'transparent' : styles.bg }}>
         
-        {/* BANNER */}
-        {hasBanner ? (
-            <div className="w-full h-48 relative z-0">
+        {/* LÓGICA DO BANNER INTERNO */}
+        {!hasBanner && <div className="w-full h-16 shrink-0"></div>}
+        
+        {/* BANNER ESTILO: TOPO (Clássico - Fica preso na caixa) */}
+        {hasBanner && bannerStyle === 'top' && (
+            <div className="w-full h-48 relative z-0 shrink-0">
                 <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent"></div>
             </div>
-        ) : (
-            <div className="w-full h-16"></div>
         )}
 
         {/* --- HEADER (Botões de Ação) --- */}
         <div className="absolute top-4 right-4 z-50 flex gap-2" ref={menuRef}>
-            
-            {/* BOTÃO 3 PONTINHOS (MENU) */}
             <div className="relative">
-                <button 
-                    onClick={() => setShowMenu(!showMenu)} 
-                    className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors border border-white/10 shadow-lg"
-                >
+                <button onClick={() => setShowMenu(!showMenu)} className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors border border-white/10 shadow-lg">
                     <MoreHorizontal className="w-5 h-5" />
                 </button>
 
-                {/* MENU DROPDOWN */}
                 {showMenu && (
                     <div className="absolute top-12 right-0 w-48 bg-white text-slate-900 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 origin-top-right border border-slate-200 z-50">
                         <button onClick={handleCopyLink} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-sm font-medium border-b border-slate-100">
@@ -170,7 +188,6 @@ export default function PublicProfile() {
                 )}
             </div>
 
-            {/* BOTÃO SHARE */}
             <button onClick={handleShare} disabled={isSharing} className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors border border-white/10 shadow-lg ${isSharing ? 'opacity-50' : ''}`}>
                 <Share2 className="w-5 h-5" />
             </button>
@@ -180,7 +197,7 @@ export default function PublicProfile() {
         <div className="flex-1 w-full px-6 pb-16 flex flex-col items-center relative z-10">
             
             {/* AVATAR */}
-            <div className={`mb-4 relative group ${hasBanner ? '-mt-16' : 'mt-4'}`}>
+            <div className={`mb-4 relative group flex flex-col items-center ${hasBanner ? (bannerStyle === 'top' ? '-mt-16' : 'mt-12 md:mt-20') : 'mt-4'}`}>
                 <div className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 object-cover overflow-hidden shadow-2xl bg-slate-800" style={{ borderColor: profile.use_gradient ? profile.gradient_from : profile.button_color }}>
                     {profile.avatar_url ? (
                         <img src={profile.avatar_url} className="w-full h-full object-cover" /> 
@@ -213,10 +230,8 @@ export default function PublicProfile() {
                 const Icon = getIconComponent(link.icon || 'link');
                 const isGhost = profile.highlight_first_link && index !== 0;
                 
-                // --- CORREÇÃO NA COR DO ÍCONE ---
                 let iconColor = profile.icon_color || profile.button_text_color || '#000000';
                 if (isGhost) iconColor = profile.title_color || '#FFFFFF';
-                // ---------------------------------
 
                 return (
                 <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="block group transition-transform hover:scale-[1.02] active:scale-95">

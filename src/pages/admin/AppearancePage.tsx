@@ -19,7 +19,7 @@ const ALL_FONTS = [
   {name:'Lora',label:'Lora (Serifa)'}, {name:'Merriweather',label:'Merriweather'}, {name:'Dancing Script',label:'Dancing Script'}
 ];
 
-const CATEGORIES = ["Todos", "Minimalista", "Criativo", "Profissional", "Dark", "Natureza"];
+const CATEGORIES = ["Todos", "Minimalista", "Profissional", "Imóveis", "Saúde", "Direito"];
 
 const ProBadge = () => (
   <span className="ml-auto bg-yellow-500/10 text-yellow-500 text-[10px] px-1.5 py-0.5 rounded border border-yellow-500/20 font-bold items-center gap-1 inline-flex cursor-help" title="Recurso Premium">
@@ -53,6 +53,7 @@ export default function AppearancePage() {
         setCustomization({
           ...data,
           display_banner: data.display_banner ?? true,
+          banner_style: data.banner_style || 'top', // NOVO ESTADO
           display_branding: data.display_branding ?? true,
           highlight_first_link: data.highlight_first_link ?? false,
           button_border_width: data.button_border_width || '0px',
@@ -73,7 +74,6 @@ export default function AppearancePage() {
     if (data) setLinks(data);
   };
 
-  // --- SALVAMENTO BLINDADO: Envia apenas colunas que existem no banco ---
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -86,7 +86,7 @@ export default function AppearancePage() {
         if (customization.display_branding === false) usedProFeatures.push("Remover Marca");
         if (customization.title_font_family && customization.title_font_family !== 'Inter') usedProFeatures.push("Fonte Título");
         if (customization.font_family && customization.font_family !== 'Inter') usedProFeatures.push("Fonte Bio");
-        if (customization.display_banner === false) usedProFeatures.push("Ocultar Banner");
+        if (customization.display_banner === true) usedProFeatures.push("Uso de Banner"); // Banner é premium
 
         if (usedProFeatures.length > 0) {
             toast.error(`Recursos Premium: ${usedProFeatures.join(", ")}`, { description: "Assine para salvar." });
@@ -96,10 +96,10 @@ export default function AppearancePage() {
         }
       }
 
-      // 2. Filtra as colunas para evitar o erro 400 do Supabase
+      // 2. Filtra as colunas seguras (ADICIONADO banner_style)
       const validColumns = [
         'username', 'full_name', 'avatar_url', 'bio', 'theme_color', 'background_color',
-        'text_color', 'button_color', 'button_text_color', 'font_family', 'banner_url',
+        'text_color', 'button_color', 'button_text_color', 'font_family', 'banner_url', 'banner_style',
         'title_font_family', 'title_color', 'bio_color', 'button_border_color',
         'use_gradient', 'gradient_from', 'gradient_to', 'icon_color', 'font_size',
         'button_border_width', 'title_font_size', 'bio_font_size', 'display_banner',
@@ -113,12 +113,8 @@ export default function AppearancePage() {
         }
       }
 
-      // 3. Salva os dados limpos
       const { error } = await supabase.from('profiles').update(safeUpdates).eq('id', user!.id);
-
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
       toast.success('Alterações salvas!');
       setProfile(prev => ({ ...prev!, ...customization }));
@@ -203,7 +199,7 @@ export default function AppearancePage() {
                     <div className="fixed inset-0 z-[9999] flex items-start justify-center p-4 pt-10 md:pt-20 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
                     <div className="bg-slate-900 border border-slate-700 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
                         <div className="p-4 border-b border-slate-800 flex justify-between items-center"><h2 className="text-xl font-bold text-white">Temas</h2><button onClick={() => setShowGallery(false)}><XCircle className="w-8 h-8 text-slate-400 hover:text-white" /></button></div>
-                        <div className="p-4 flex gap-2 overflow-x-auto bg-slate-900">{CATEGORIES.map(cat => (<button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold ${selectedCategory === cat ? 'bg-yellow-500 text-slate-900' : 'bg-slate-800 text-slate-300'}`}>{cat}</button>))}</div>
+                        <div className="p-4 flex gap-2 overflow-x-auto bg-slate-900">{CATEGORIES.map(cat => (<button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${selectedCategory === cat ? 'bg-yellow-500 text-slate-900' : 'bg-slate-800 text-slate-300'}`}>{cat}</button>))}</div>
                         <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
                         {filteredTemplates.map(template => (
                             <button key={template.id} onClick={() => applyTemplate(template)} className="group relative aspect-[9/16] rounded-2xl border-4 border-slate-800 bg-slate-900 overflow-hidden hover:border-slate-600 transition-all">
@@ -216,21 +212,33 @@ export default function AppearancePage() {
                     </div></div>
                 )}
 
-                {/* Uploads */}
+                {/* Uploads & Banner Style */}
                 <div className="space-y-6">
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <label className="text-sm font-medium text-slate-300 flex items-center gap-2">Banner {!isPremium && <ProBadge />}</label>
+                    <div className="space-y-2 border border-slate-800 p-4 rounded-xl bg-slate-900/50">
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="text-sm font-medium text-slate-300 flex items-center gap-2">Habilitar Banner {!isPremium && <ProBadge />}</label>
                             <input type="checkbox" className="toggle toggle-sm accent-yellow-500" checked={customization.display_banner !== false} onChange={(e) => setCustomization({...customization, display_banner: e.target.checked})} />
                         </div>
-                        <div className="h-24 bg-slate-800 rounded-lg border border-dashed border-slate-600 relative overflow-hidden group">
-                            {customization.banner_url && <img src={customization.banner_url} className="w-full h-full object-cover" />}
-                            <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer text-xs text-white">
-                                <Upload className="w-4 h-4 mr-1" /> Alterar
-                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUpload(e, 'banner_url')} disabled={uploading} />
-                            </label>
-                        </div>
+                        
+                        {customization.display_banner !== false && (
+                          <>
+                            <div className="h-24 bg-slate-800 rounded-lg border border-dashed border-slate-600 relative overflow-hidden group mb-4">
+                                {customization.banner_url && <img src={customization.banner_url} className="w-full h-full object-cover" />}
+                                <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer text-xs text-white">
+                                    <Upload className="w-4 h-4 mr-1" /> Alterar
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUpload(e, 'banner_url')} disabled={uploading} />
+                                </label>
+                            </div>
+                            
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Estilo do Banner</label>
+                            <div className="flex bg-slate-950 border border-slate-800 rounded-lg p-1">
+                                <button onClick={() => setCustomization({...customization, banner_style: 'top'})} className={`flex-1 py-2 text-xs font-bold rounded ${customization.banner_style !== 'expanded' ? 'bg-yellow-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}>Clássico (Topo)</button>
+                                <button onClick={() => setCustomization({...customization, banner_style: 'expanded'})} className={`flex-1 py-2 text-xs font-bold rounded ${customization.banner_style === 'expanded' ? 'bg-yellow-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}>Imersivo (Fundo)</button>
+                            </div>
+                          </>
+                        )}
                     </div>
+                    
                     <div className="flex gap-4">
                         <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-600 overflow-hidden relative shrink-0">
                             {customization.avatar_url ? <img src={customization.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl text-slate-500">{profile?.username?.[0]?.toUpperCase()}</div>}
@@ -273,7 +281,6 @@ export default function AppearancePage() {
                             </div>
                         </div>
                         
-                        {/* ALTERAÇÃO AQUI: Mostra Cores do Gradiente se marcado, ou Cor Sólida se desmarcado */}
                         <div className={`grid ${customization.use_gradient ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
                             {customization.use_gradient ? (
                                 <>

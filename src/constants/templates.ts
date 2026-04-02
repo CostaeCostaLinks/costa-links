@@ -105,6 +105,61 @@ export const DEMO_LINKS_FREE = [
       }
     },
     {
+    id: 'real-estate-premium',
+    label: 'Alto Padrão',
+    category: 'Imóveis',
+    type: 'premium',
+    config: {
+      theme_color: 'dark',
+      background_color: '#0A192F', // Azul Marinho Profundo
+      text_color: '#FFFFFF',
+      title_color: '#FFFFFF',
+      bio_color: '#94A3B8',
+      button_color: '#D4AF37', // Dourado
+      button_text_color: '#000000',
+      icon_color: '#000000',
+      font_family: 'Montserrat',
+      title_font_family: 'Playfair Display',
+      button_border_color: 'transparent',
+      button_border_width: '0px',
+      use_gradient: true,
+      gradient_from: '#BF953F',
+      gradient_to: '#FCF6BA',
+      font_size: 'medium',
+      title_font_size: '3xl',
+      bio_font_size: 'sm',
+      display_banner: true,
+      banner_style: 'top', // Ou 'expanded' se preferir por padrão
+      highlight_first_link: true,
+    }
+  },
+  {
+    id: 'law-firm',
+    label: 'Advocacia Clássica',
+    category: 'Direito',
+    type: 'premium',
+    config: {
+      theme_color: 'dark',
+      background_color: '#1A1A1A', // Quase preto
+      text_color: '#FFFFFF',
+      title_color: '#D4AF37', // Título dourado
+      bio_color: '#A3A3A3',
+      button_color: 'transparent', // Botões fantasma (borda)
+      button_text_color: '#FFFFFF',
+      icon_color: '#D4AF37',
+      font_family: 'Lora',
+      title_font_family: 'Playfair Display',
+      button_border_color: '#333333',
+      button_border_width: '1px',
+      use_gradient: false,
+      font_size: 'medium',
+      title_font_size: '4xl',
+      bio_font_size: 'base',
+      display_banner: false,
+      highlight_first_link: false,
+    }
+  },
+    {
       id: 'ocean', label: 'Ocean Blue', category: 'Criativo', type: 'premium',
       colors: { bg: '#172554' },
       users: '8k+',

@@ -10,6 +10,7 @@ export interface Profile {
   bio?: string;
   website?: string;
   display_branding?: boolean;
+  banner_style?: string;
   
   // Cores Básicas
   background_color?: string;
