@@ -65,18 +65,26 @@ export default function PublicProfile() {
     titleFont: profile.title_font_family || 'Inter'
   };
 
+  // --- LÓGICA DE ESTILO DOS BOTÕES (COM DESTAQUE E FANTASMA) ---
   const getButtonStyle = (index: number) => {
     const isHighlight = profile.highlight_first_link && index === 0;
+    const isGhost = profile.highlight_first_link && index !== 0;
+
     const baseStyle = { 
         fontFamily: styles.font, 
         fontSize: '1rem',
         borderStyle: 'solid',
     };
 
+    // 1º Link (Principal)
     if (isHighlight) {
+        const bgStyle = profile.use_gradient 
+            ? { background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` }
+            : { backgroundColor: profile.button_color || '#EAB308' };
+
         return { 
             ...baseStyle, 
-            backgroundColor: profile.button_color || '#EAB308', 
+            ...bgStyle,
             color: profile.button_text_color || '#000000', 
             borderWidth: '0px', 
             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', 
@@ -84,6 +92,18 @@ export default function PublicProfile() {
         };
     }
 
+    // Links Secundários (Fantasmas/Transparentes)
+    if (isGhost) {
+        return { 
+            ...baseStyle, 
+            backgroundColor: 'transparent',
+            color: profile.title_color || '#FFFFFF',
+            borderColor: (profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : (profile.button_color || '#EAB308'),
+            borderWidth: (!profile.button_border_width || profile.button_border_width === '0px') ? '1px' : profile.button_border_width
+        };
+    }
+
+    // Padrão (Sem destaque ativo e usando gradiente)
     if (profile.use_gradient) {
       return { 
           ...baseStyle, 
@@ -94,11 +114,11 @@ export default function PublicProfile() {
       };
     }
     
-    const isGhost = profile.highlight_first_link && index !== 0;
+    // Padrão (Sólido)
     return { 
         ...baseStyle, 
-        backgroundColor: isGhost ? 'transparent' : (profile.button_color || '#EAB308'),
-        color: isGhost ? (profile.title_color || '#FFFFFF') : (profile.button_text_color || '#000000'),
+        backgroundColor: profile.button_color || '#EAB308',
+        color: profile.button_text_color || '#000000',
         borderColor: (profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : (profile.button_color || '#EAB308'),
         borderWidth: (!profile.button_border_width || profile.button_border_width === '0px') ? '1px' : profile.button_border_width
     };
@@ -125,29 +145,25 @@ export default function PublicProfile() {
   const hasBanner = profile.banner_url && profile.display_banner !== false;
   const bannerStyle = profile.banner_style || 'top';
 
-  // Define se o container central terá as bordas de "app" ou será imersivo
   const containerClasses = bannerStyle === 'expanded'
-    ? 'w-full max-w-[550px] min-h-screen relative z-10 flex flex-col transition-all pt-8' // Sem bordas, sem overflow hidden
-    : 'w-full max-w-[550px] min-h-screen relative z-10 flex flex-col shadow-2xl transition-all border-x border-white/5 md:mt-8 md:rounded-t-[3rem] overflow-hidden'; // Estilo "App/Cartão"
+    ? 'w-full max-w-[550px] min-h-screen relative z-10 flex flex-col transition-all pt-8'
+    : 'w-full max-w-[550px] min-h-screen relative z-10 flex flex-col shadow-2xl transition-all border-x border-white/5 md:mt-8 md:rounded-t-[3rem] overflow-hidden';
 
   return (
     <div className="min-h-screen w-full flex justify-center overflow-x-hidden relative" style={{ backgroundColor: styles.bg }}>
       
-      {/* BANNER ESTILO: EXPANDIDO (Imersivo - Fica no fundo da página inteira) */}
+      {/* BANNER ESTILO: EXPANDIDO (Imersivo com Brilho) */}
       {bannerStyle === 'expanded' && (
           <div className="absolute top-0 left-0 w-full h-[400px] md:h-[500px] z-0 pointer-events-none overflow-hidden">
-              {/* Efeito de Brilho (Glow) base - aparece mesmo sem imagem */}
               <div 
                   className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full blur-[100px] opacity-20"
                   style={{ backgroundColor: profile.use_gradient ? profile.gradient_from : (profile.button_color || '#EAB308') }}
               ></div>
 
-              {/* Se tiver imagem, renderiza ela com opacidade */}
               {hasBanner && (
                   <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover opacity-30 mix-blend-screen" />
               )}
               
-              {/* O gradiente faz a transição suave para a cor de fundo escolhida */}
               <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${styles.bg} 70%, ${styles.bg} 100%)` }}></div>
           </div>
       )}
@@ -155,10 +171,9 @@ export default function PublicProfile() {
       {/* CONTAINER CENTRAL */}
       <div className={containerClasses} style={{ backgroundColor: bannerStyle === 'expanded' ? 'transparent' : styles.bg }}>
         
-        {/* LÓGICA DO BANNER INTERNO */}
-        {!hasBanner && <div className="w-full h-16 shrink-0"></div>}
+        {!hasBanner && bannerStyle !== 'expanded' && <div className="w-full h-16 shrink-0"></div>}
         
-        {/* BANNER ESTILO: TOPO (Clássico - Fica preso na caixa) */}
+        {/* BANNER ESTILO: TOPO (Clássico) */}
         {hasBanner && bannerStyle === 'top' && (
             <div className="w-full h-48 relative z-0 shrink-0">
                 <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />

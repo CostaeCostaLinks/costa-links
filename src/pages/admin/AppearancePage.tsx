@@ -53,7 +53,7 @@ export default function AppearancePage() {
         setCustomization({
           ...data,
           display_banner: data.display_banner ?? true,
-          banner_style: data.banner_style || 'top', // NOVO ESTADO
+          banner_style: data.banner_style || 'top',
           display_branding: data.display_branding ?? true,
           highlight_first_link: data.highlight_first_link ?? false,
           button_border_width: data.button_border_width || '0px',
@@ -78,7 +78,6 @@ export default function AppearancePage() {
     try {
       setLoading(true);
 
-      // 1. Paywall Check
       if (!isPremium) {
         const usedProFeatures = [];
         if (customization.use_gradient) usedProFeatures.push("Gradiente");
@@ -86,7 +85,7 @@ export default function AppearancePage() {
         if (customization.display_branding === false) usedProFeatures.push("Remover Marca");
         if (customization.title_font_family && customization.title_font_family !== 'Inter') usedProFeatures.push("Fonte Título");
         if (customization.font_family && customization.font_family !== 'Inter') usedProFeatures.push("Fonte Bio");
-        if (customization.display_banner === true) usedProFeatures.push("Uso de Banner"); // Banner é premium
+        if (customization.display_banner === true) usedProFeatures.push("Uso de Banner"); 
 
         if (usedProFeatures.length > 0) {
             toast.error(`Recursos Premium: ${usedProFeatures.join(", ")}`, { description: "Assine para salvar." });
@@ -96,7 +95,6 @@ export default function AppearancePage() {
         }
       }
 
-      // 2. Filtra as colunas seguras (ADICIONADO banner_style)
       const validColumns = [
         'username', 'full_name', 'avatar_url', 'bio', 'theme_color', 'background_color',
         'text_color', 'button_color', 'button_text_color', 'font_family', 'banner_url', 'banner_style',
@@ -160,6 +158,39 @@ export default function AppearancePage() {
     }
     setShowGallery(false);
     setLoading(false);
+  };
+
+  // =========================================================================
+  // RENDERIZAÇÃO INTELIGENTE DE CORES (Permite copiar e colar HEX)
+  // =========================================================================
+  const isValidHex = (color: string) => /^#[0-9A-F]{6}$/i.test(color);
+
+  const renderColorInput = (label: string, fieldKey: string, premium = false) => {
+    const value = customization[fieldKey] || '';
+    const colorValue = isValidHex(value) ? value : '#000000'; 
+
+    return (
+        <div>
+            <label className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-2">
+                {label} {premium && !isPremium && <ProBadge />}
+            </label>
+            <div className="flex bg-slate-950 border border-slate-700 rounded-lg h-10 overflow-hidden focus-within:border-yellow-500 transition-colors">
+                <input 
+                    type="color" 
+                    value={colorValue} 
+                    onChange={(e) => setCustomization({...customization, [fieldKey]: e.target.value})} 
+                    className="w-12 h-full cursor-pointer border-0 bg-transparent p-1" 
+                />
+                <input 
+                    type="text" 
+                    value={value} 
+                    onChange={(e) => setCustomization({...customization, [fieldKey]: e.target.value})} 
+                    className="w-full bg-transparent border-0 text-white text-xs px-2 focus:outline-none font-mono uppercase" 
+                    placeholder="#000000"
+                />
+            </div>
+        </div>
+    );
   };
 
   if (loading) return <div className="p-10 text-center text-slate-500">Carregando editor...</div>;
@@ -255,53 +286,47 @@ export default function AppearancePage() {
                     </div>
                 </div>
 
-                {/* Cores */}
+                {/* Cores e Estilos */}
                 <div className="space-y-4 border-t border-slate-800 pt-6">
                     <h3 className="text-white font-bold">Cores e Estilo</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 block mb-1">Fundo</label>
-                            <input type="color" value={customization.background_color || '#000000'} onChange={e => setCustomization({...customization, background_color: e.target.value})} className="h-10 w-full rounded cursor-pointer bg-slate-800 border border-slate-700 p-1" />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-2">Cor Nome {!isPremium && <ProBadge />}</label>
-                            <input type="color" value={customization.title_color || '#ffffff'} onChange={e => setCustomization({...customization, title_color: e.target.value})} className="h-10 w-full rounded cursor-pointer bg-slate-800 border border-slate-700 p-1" />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-2">Cor Bio {!isPremium && <ProBadge />}</label>
-                            <input type="color" value={customization.bio_color || '#94A3B8'} onChange={e => setCustomization({...customization, bio_color: e.target.value})} className="h-10 w-full rounded cursor-pointer bg-slate-800 border border-slate-700 p-1" />
-                        </div>
+                        {renderColorInput('Fundo', 'background_color')}
+                        {renderColorInput('Cor Nome', 'title_color', true)}
+                        {renderColorInput('Cor Bio', 'bio_color', true)}
                     </div>
 
                     <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-4">
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <span className="text-sm text-slate-300">Botões</span>
-                            <div className="flex gap-3">
-                                <span className="text-xs text-slate-500 flex items-center gap-1">Gradiente {!isPremium && <ProBadge />} <input type="checkbox" checked={customization.use_gradient} onChange={(e) => setCustomization({...customization, use_gradient: e.target.checked})} className="toggle toggle-xs accent-yellow-500" /></span>
+                            
+                            {/* AQUI ESTÃO OS DOIS BOTÕES: DESTACAR 1º LINK e GRADIENTE */}
+                            <div className="flex gap-4">
+                                <span className="text-xs text-slate-500 flex items-center gap-1">
+                                    Destacar 1º Link {!isPremium && <ProBadge />} 
+                                    <input type="checkbox" checked={customization.highlight_first_link} onChange={(e) => setCustomization({...customization, highlight_first_link: e.target.checked})} className="toggle toggle-xs accent-yellow-500" />
+                                </span>
+                                <span className="text-xs text-slate-500 flex items-center gap-1">
+                                    Gradiente {!isPremium && <ProBadge />} 
+                                    <input type="checkbox" checked={customization.use_gradient} onChange={(e) => setCustomization({...customization, use_gradient: e.target.checked})} className="toggle toggle-xs accent-yellow-500" />
+                                </span>
                             </div>
                         </div>
                         
                         <div className={`grid ${customization.use_gradient ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
                             {customization.use_gradient ? (
                                 <>
-                                    <div><label className="text-xs font-bold text-slate-500 mb-1 block">Gradiente 1</label><input type="color" value={customization.gradient_from || '#EAB308'} onChange={e => setCustomization({...customization, gradient_from: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
-                                    <div><label className="text-xs font-bold text-slate-500 mb-1 block">Gradiente 2</label><input type="color" value={customization.gradient_to || '#CA8A04'} onChange={e => setCustomization({...customization, gradient_to: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
+                                    {renderColorInput('Gradiente 1', 'gradient_from')}
+                                    {renderColorInput('Gradiente 2', 'gradient_to')}
                                 </>
                             ) : (
-                                <div><label className="text-xs font-bold text-slate-500 mb-1 block">Cor Botão</label><input type="color" value={customization.button_color || '#EAB308'} onChange={e => setCustomization({...customization, button_color: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
+                                renderColorInput('Cor Botão', 'button_color')
                             )}
-                            <div><label className="text-xs font-bold text-slate-500 mb-1 block">Cor Texto</label><input type="color" value={customization.button_text_color || '#000000'} onChange={e => setCustomization({...customization, button_text_color: e.target.value})} className="h-8 w-full rounded cursor-pointer border border-slate-700 p-0" /></div>
+                            {renderColorInput('Cor Texto(botão principal)', 'button_text_color')}
                         </div>
 
-                        <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-4">
-                             <div>
-                                 <label className="text-xs font-bold text-slate-500 block mb-1">Cor do Ícone</label>
-                                 <input type="color" value={customization.icon_color || '#ffffff'} onChange={e => setCustomization({...customization, icon_color: e.target.value})} className="h-9 w-full rounded cursor-pointer bg-slate-800 border border-slate-700 p-1" />
-                             </div>
-                             <div>
-                                 <label className="text-xs font-bold text-slate-500 block mb-1">Cor da Borda</label>
-                                 <input type="color" value={customization.button_border_color || 'transparent'} onChange={e => setCustomization({...customization, button_border_color: e.target.value})} className="h-9 w-full rounded cursor-pointer bg-slate-800 border border-slate-700 p-1" />
-                             </div>
+                        <div className="pt-4 border-t border-slate-800 grid grid-cols-2 gap-4">
+                             {renderColorInput('Cor do Ícone', 'icon_color')}
+                             {renderColorInput('Cor da Borda', 'button_border_color')}
                         </div>
                         <div>
                             <label className="text-xs font-bold text-slate-500 uppercase mb-2 flex justify-between">Espessura Borda <span>{customization.button_border_width}</span></label>

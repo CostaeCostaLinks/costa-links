@@ -34,73 +34,71 @@ export default function PreviewPhone({ profile, links }: PreviewPhoneProps) {
   };
 
   const getButtonStyle = (index: number) => {
-    const isHighlightActive = profile.highlight_first_link && index === 0;
-    const isOthersInHighlightMode = profile.highlight_first_link && index !== 0;
+    const isHighlight = profile.highlight_first_link && index === 0;
+    const isGhost = profile.highlight_first_link && index !== 0;
 
-    const baseStyle = {
-      fontFamily: styles.font,
-      fontSize: getButtonFontSize(),
-      borderStyle: 'solid',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-      padding: '14px 16px',
-      borderRadius: '9999px',
-      marginBottom: '12px',
-      cursor: 'pointer',
-      transition: 'all 0.2s',
-      position: 'relative' as const,
-      overflow: 'hidden'
+    const baseStyle = { 
+        fontFamily: profile.font_family || 'Inter', 
+        fontSize: profile.font_size === 'small' ? '0.75rem' : profile.font_size === 'large' ? '1rem' : '0.875rem',
+        borderStyle: 'solid',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        padding: '16px 20px', // Padding mais encorpado que criamos
+        borderRadius: '9999px',
+        marginBottom: '12px',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
     };
 
-    if (isHighlightActive) {
-      return {
-        ...baseStyle,
+    // LÓGICA DO BOTÃO PRINCIPAL (1º Link)
+    if (isHighlight) {
+        const bgStyle = profile.use_gradient 
+            ? { background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` }
+            : { backgroundColor: profile.button_color || '#EAB308' };
+
+        return { 
+            ...baseStyle, 
+            ...bgStyle,
+            color: profile.button_text_color || '#000000', 
+            borderWidth: '0px', 
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', 
+            transform: 'scale(1.02)' 
+        };
+    }
+
+    // LÓGICA DOS BOTÕES SECUNDÁRIOS (Transparentes com Borda)
+    if (isGhost) {
+        return { 
+            ...baseStyle, 
+            backgroundColor: 'transparent',
+            color: profile.title_color || '#FFFFFF',
+            borderColor: (profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : (profile.button_color || '#EAB308'),
+            borderWidth: (!profile.button_border_width || profile.button_border_width === '0px') ? '1px' : profile.button_border_width
+        };
+    }
+
+    // Padrão (Sem destaque ativo e usando gradiente)
+    if (profile.use_gradient) {
+      return { 
+          ...baseStyle, 
+          color: profile.button_text_color || '#000000', 
+          borderWidth: profile.button_border_width || '0px',
+          borderColor: profile.button_border_color || 'transparent',
+          background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` 
+      };
+    }
+    
+    // Padrão (Sólido)
+    return { 
+        ...baseStyle, 
         backgroundColor: profile.button_color || '#EAB308',
         color: profile.button_text_color || '#000000',
-        borderWidth: '0px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        transform: 'scale(1.02)'
-      };
-    }
-
-    if (isOthersInHighlightMode) {
-      const borderColor = (profile.button_border_color && profile.button_border_color !== 'transparent') 
-          ? profile.button_border_color 
-          : (profile.button_color || '#EAB308');
-      const borderWidth = (!profile.button_border_width || profile.button_border_width === '0px') 
-          ? '1px' 
-          : profile.button_border_width;
-
-      return {
-        ...baseStyle,
-        backgroundColor: 'transparent',
-        borderColor: borderColor, 
-        borderWidth: borderWidth,
-        color: profile.title_color || '#FFFFFF',
-      };
-    }
-
-    if (profile.use_gradient) {
-      return {
-        ...baseStyle,
-        color: profile.button_text_color || '#000000',
-        borderWidth: profile.button_border_width || '0px',
-        borderColor: profile.button_border_color || 'transparent',
-        background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})`,
-      };
-    }
-
-    return {
-      ...baseStyle,
-      backgroundColor: profile.button_color || '#EAB308',
-      color: profile.button_text_color || '#000000',
-      borderWidth: profile.button_border_width || '0px',
-      borderColor: profile.button_border_color || 'transparent',
+        borderColor: (profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : (profile.button_color || '#EAB308'),
+        borderWidth: (!profile.button_border_width || profile.button_border_width === '0px') ? '1px' : profile.button_border_width
     };
   };
-
   const showBanner = profile.banner_url && profile.display_banner !== false;
 
   return (
