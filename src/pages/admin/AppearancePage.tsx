@@ -5,25 +5,27 @@ import { useAuth } from '@/hooks/useAuth';
 import { Profile, Link as LinkType } from '@/types';
 import Input from '@/components/Input';
 import { toast } from 'sonner';
-import { Upload, Crown, Search, Save, XCircle, Link as LinkIcon, Copy, Eye, X } from 'lucide-react';
+import { Upload, Crown, Search, Save, XCircle, Link as LinkIcon, Copy, Eye, X, Lock } from 'lucide-react';
 import { useAdminContext } from '@/layouts/AdminLayout';
 import { Link as RouterLink } from 'react-router-dom';
 import PreviewPhone from '@/components/PreviewPhone';
 import { TEMPLATES } from '@/constants/templates'; 
 import TemplateMockup from '@/components/TemplateMockup'; 
 
+const PRO_FONTS = ['Montserrat', 'Poppins', 'Raleway', 'Oswald', 'Playfair Display', 'Lora', 'Merriweather', 'Dancing Script'];
+
 const ALL_FONTS = [
-  {name:'Inter',label:'Inter (Moderno)'}, {name:'Roboto',label:'Roboto (Neutro)'}, {name:'Open Sans',label:'Open Sans'},
-  {name:'Lato',label:'Lato'}, {name:'Montserrat',label:'Montserrat'}, {name:'Poppins',label:'Poppins'},
-  {name:'Raleway',label:'Raleway'}, {name:'Oswald',label:'Oswald'}, {name:'Playfair Display',label:'Playfair (Serifa)'},
-  {name:'Lora',label:'Lora (Serifa)'}, {name:'Merriweather',label:'Merriweather'}, {name:'Dancing Script',label:'Dancing Script'}
+  {name:'Inter',label:'Inter (Moderno)', isPro: false}, {name:'Roboto',label:'Roboto (Neutro)', isPro: false}, {name:'Open Sans',label:'Open Sans', isPro: false},
+  {name:'Lato',label:'Lato', isPro: false}, {name:'Montserrat',label:'Montserrat', isPro: true}, {name:'Poppins',label:'Poppins', isPro: true},
+  {name:'Raleway',label:'Raleway', isPro: true}, {name:'Oswald',label:'Oswald', isPro: true}, {name:'Playfair Display',label:'Playfair (Serifa)', isPro: true},
+  {name:'Lora',label:'Lora (Serifa)', isPro: true}, {name:'Merriweather',label:'Merriweather', isPro: true}, {name:'Dancing Script',label:'Dancing Script', isPro: true}
 ];
 
 const CATEGORIES = ["Todos", "Minimalista", "Profissional", "Imóveis", "Saúde", "Direito"];
 
 const ProBadge = () => (
   <span className="ml-auto bg-yellow-500/10 text-yellow-500 text-[10px] px-1.5 py-0.5 rounded border border-yellow-500/20 font-bold items-center gap-1 inline-flex cursor-help" title="Recurso Premium">
-    <Crown className="w-3 h-3" /> PRO
+    <Lock className="w-3 h-3" /> PRO
   </span>
 );
 
@@ -48,11 +50,12 @@ export default function AppearancePage() {
   const loadData = async () => {
     try {
       const { data } = await supabase.from('profiles').select('*').eq('id', user!.id).single();
+      const isUserPremium = data?.plan === 'premium';
       if (data) {
         setProfile(data);
         setCustomization({
           ...data,
-          display_banner: data.display_banner ?? true,
+          display_banner: isUserPremium ? (data.display_banner ?? true) : false,
           banner_style: data.banner_style || 'top',
           display_branding: data.display_branding ?? true,
           highlight_first_link: data.highlight_first_link ?? false,
@@ -63,7 +66,9 @@ export default function AppearancePage() {
           title_font_size: data.title_font_size || '3xl',
           bio_font_size: data.bio_font_size || 'base',
           title_color: data.title_color || '#FFFFFF',
-          bio_color: data.bio_color || '#94A3B8'
+          bio_color: data.bio_color || '#94A3B8',
+          // Nova propriedade
+          use_borders: isUserPremium ? (data.use_borders ?? false) : false,
         });
       }
     } catch (error) { console.error(error); } finally { setLoading(false); }
@@ -83,9 +88,10 @@ export default function AppearancePage() {
         if (customization.use_gradient) usedProFeatures.push("Gradiente");
         if (customization.highlight_first_link) usedProFeatures.push("Destaque Link");
         if (customization.display_branding === false) usedProFeatures.push("Remover Marca");
-        if (customization.title_font_family && customization.title_font_family !== 'Inter') usedProFeatures.push("Fonte Título");
-        if (customization.font_family && customization.font_family !== 'Inter') usedProFeatures.push("Fonte Bio");
+        if (customization.title_font_family && PRO_FONTS.includes(customization.title_font_family)) usedProFeatures.push("Fonte Título");
+        if (customization.font_family && PRO_FONTS.includes(customization.font_family)) usedProFeatures.push("Fonte Bio");
         if (customization.display_banner === true) usedProFeatures.push("Uso de Banner"); 
+        if (customization.use_borders) usedProFeatures.push("Bordas nos Botões");
 
         if (usedProFeatures.length > 0) {
             toast.error(`Recursos Premium: ${usedProFeatures.join(", ")}`, { description: "Assine para salvar." });
@@ -101,7 +107,7 @@ export default function AppearancePage() {
         'title_font_family', 'title_color', 'bio_color', 'button_border_color',
         'use_gradient', 'gradient_from', 'gradient_to', 'icon_color', 'font_size',
         'button_border_width', 'title_font_size', 'bio_font_size', 'display_banner',
-        'highlight_first_link', 'page_link_url'
+        'highlight_first_link', 'page_link_url', 'use_borders'
       ];
 
       const safeUpdates: any = {};
@@ -150,7 +156,14 @@ export default function AppearancePage() {
 
   const applyTemplate = async (template: typeof TEMPLATES[0]) => {
     setLoading(true);
-    setCustomization((prev: any) => ({ ...prev, ...template.config }));
+    // Trava de segurança para templates gratuitos
+    const templateConfig: any = { ...template.config };
+    if (!isPremium && template.type === 'free') {
+        templateConfig.button_border_width = '0px';
+        templateConfig.use_borders = false;
+    }
+
+    setCustomization((prev: any) => ({ ...prev, ...templateConfig }));
     if (template.type === 'premium' && !isPremium) {
         toast('Template Premium aplicado! Assine para salvar.', { icon: '👑' });
     } else {
@@ -160,9 +173,6 @@ export default function AppearancePage() {
     setLoading(false);
   };
 
-  // =========================================================================
-  // RENDERIZAÇÃO INTELIGENTE DE CORES (Permite copiar e colar HEX)
-  // =========================================================================
   const isValidHex = (color: string) => /^#[0-9A-F]{6}$/i.test(color);
 
   const renderColorInput = (label: string, fieldKey: string, premium = false) => {
@@ -178,7 +188,14 @@ export default function AppearancePage() {
                 <input 
                     type="color" 
                     value={colorValue} 
-                    onChange={(e) => setCustomization({...customization, [fieldKey]: e.target.value})} 
+                    onChange={(e) => {
+                        if(premium && !isPremium) {
+                            toast.error('Recurso Premium', { description: `Assine para alterar a ${label.toLowerCase()}` });
+                            openPricingModal();
+                            return;
+                        }
+                        setCustomization({...customization, [fieldKey]: e.target.value})
+                    }} 
                     className="w-12 h-full cursor-pointer border-0 bg-transparent p-1" 
                 />
                 <input 
@@ -248,7 +265,19 @@ export default function AppearancePage() {
                     <div className="space-y-2 border border-slate-800 p-4 rounded-xl bg-slate-900/50">
                         <div className="flex justify-between items-center mb-2">
                             <label className="text-sm font-medium text-slate-300 flex items-center gap-2">Habilitar Banner {!isPremium && <ProBadge />}</label>
-                            <input type="checkbox" className="toggle toggle-sm accent-yellow-500" checked={customization.display_banner !== false} onChange={(e) => setCustomization({...customization, display_banner: e.target.checked})} />
+                            <input 
+                                type="checkbox" 
+                                className="toggle toggle-sm accent-yellow-500" 
+                                checked={customization.display_banner !== false} 
+                                onChange={(e) => {
+                                    if(!isPremium && e.target.checked) {
+                                      toast.error('Uso de Banner', { description: 'Assine para habilitar o banner' });
+                                      openPricingModal();
+                                      return;
+                                    }
+                                    setCustomization({...customization, display_banner: e.target.checked});
+                                }} 
+                            />
                         </div>
                         
                         {customization.display_banner !== false && (
@@ -282,7 +311,19 @@ export default function AppearancePage() {
                             <span className="text-sm text-slate-300">Remover Marca d'água</span>
                             {!isPremium && <ProBadge />}
                         </div>
-                        <input type="checkbox" className="toggle toggle-sm accent-yellow-500" checked={customization.display_branding === false} onChange={(e) => setCustomization({...customization, display_branding: !e.target.checked})} />
+                        <input 
+                            type="checkbox" 
+                            className="toggle toggle-sm accent-yellow-500" 
+                            checked={customization.display_branding === false} 
+                            onChange={(e) => {
+                                if(!isPremium && !e.target.checked) {
+                                    toast.error('Remover Marca d\'água', { description: 'Assine para desativar a marca.' });
+                                    openPricingModal();
+                                    return;
+                                }
+                                setCustomization({...customization, display_branding: !e.target.checked})
+                            }} 
+                        />
                     </div>
                 </div>
 
@@ -299,15 +340,38 @@ export default function AppearancePage() {
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <span className="text-sm text-slate-300">Botões</span>
                             
-                            {/* AQUI ESTÃO OS DOIS BOTÕES: DESTACAR 1º LINK e GRADIENTE */}
                             <div className="flex gap-4">
                                 <span className="text-xs text-slate-500 flex items-center gap-1">
                                     Destacar 1º Link {!isPremium && <ProBadge />} 
-                                    <input type="checkbox" checked={customization.highlight_first_link} onChange={(e) => setCustomization({...customization, highlight_first_link: e.target.checked})} className="toggle toggle-xs accent-yellow-500" />
+                                    <input 
+                                        type="checkbox" 
+                                        checked={customization.highlight_first_link} 
+                                        onChange={(e) => {
+                                            if(!isPremium && e.target.checked) {
+                                                toast.error('Destacar 1º Link', { description: 'Assine para usar este recurso.' });
+                                                openPricingModal();
+                                                return;
+                                            }
+                                            setCustomization({...customization, highlight_first_link: e.target.checked})
+                                        }} 
+                                        className="toggle toggle-xs accent-yellow-500" 
+                                    />
                                 </span>
                                 <span className="text-xs text-slate-500 flex items-center gap-1">
                                     Gradiente {!isPremium && <ProBadge />} 
-                                    <input type="checkbox" checked={customization.use_gradient} onChange={(e) => setCustomization({...customization, use_gradient: e.target.checked})} className="toggle toggle-xs accent-yellow-500" />
+                                    <input 
+                                        type="checkbox" 
+                                        checked={customization.use_gradient} 
+                                        onChange={(e) => {
+                                             if(!isPremium && e.target.checked) {
+                                                toast.error('Uso de Gradiente', { description: 'Assine para usar gradientes.' });
+                                                openPricingModal();
+                                                return;
+                                            }
+                                            setCustomization({...customization, use_gradient: e.target.checked})
+                                        }} 
+                                        className="toggle toggle-xs accent-yellow-500" 
+                                    />
                                 </span>
                             </div>
                         </div>
@@ -321,19 +385,65 @@ export default function AppearancePage() {
                             ) : (
                                 renderColorInput('Cor Botão', 'button_color')
                             )}
-                            {renderColorInput('Cor Texto(botão principal)', 'button_text_color')}
+                            {renderColorInput('Cor Texto(botão)', 'button_text_color')}
                         </div>
 
-                        <div className="pt-4 border-t border-slate-800 grid grid-cols-2 gap-4">
-                             {renderColorInput('Cor do Ícone', 'icon_color')}
-                             {renderColorInput('Cor da Borda', 'button_border_color')}
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 flex justify-between">Espessura Borda <span>{customization.button_border_width}</span></label>
-                            <div className="h-10 flex items-center">
-                                <input type="range" min="0" max="8" className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500" value={parseInt(customization.button_border_width || '0')} onChange={(e) => setCustomization({...customization, button_border_width: `${e.target.value}px`})} />
+                        {/* NOVA SEÇÃO DE BORDAS COM TOGGLE */}
+                        <div className="pt-4 border-t border-slate-800">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-slate-300">Borda nos Botões</span>
+                                    {!isPremium && <ProBadge />}
+                                </div>
+                                <input 
+                                    type="checkbox" 
+                                    className="toggle toggle-sm accent-yellow-500" 
+                                    checked={customization.use_borders === true} 
+                                    onChange={(e) => {
+                                        if(!isPremium && e.target.checked) {
+                                            toast.error('Borda nos Botões', { description: 'Assine para habilitar bordas.' });
+                                            openPricingModal();
+                                            return;
+                                        }
+                                        setCustomization({
+                                            ...customization, 
+                                            use_borders: e.target.checked,
+                                            // Se ativou e as propriedades estavam zeradas, define um padrão
+                                            button_border_width: (e.target.checked && (!customization.button_border_width || customization.button_border_width === '0px')) ? '2px' : customization.button_border_width,
+                                            button_border_color: (e.target.checked && (!customization.button_border_color || customization.button_border_color === 'transparent')) ? '#ffffff' : customization.button_border_color
+                                        });
+                                    }} 
+                                />
                             </div>
+
+                            {/* Só mostra os controles de borda se a chave estiver ligada */}
+                            {customization.use_borders && (
+                                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                                    {renderColorInput('Cor da Borda', 'button_border_color')}
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-500 uppercase mb-2 flex justify-between items-center">
+                                            <span>Espessura</span>
+                                            <span>{customization.button_border_width}</span>
+                                        </label>
+                                        <div className="h-10 flex items-center">
+                                            <input 
+                                                type="range" 
+                                                min="1" 
+                                                max="8" 
+                                                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500" 
+                                                value={parseInt(customization.button_border_width || '2')} 
+                                                onChange={(e) => setCustomization({...customization, button_border_width: `${e.target.value}px`})} 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+
+                        <div className="pt-4 border-t border-slate-800 grid grid-cols-1">
+                             {renderColorInput('Cor do Ícone', 'icon_color')}
+                        </div>
+                        
                     </div>
                 </div>
 
@@ -347,7 +457,21 @@ export default function AppearancePage() {
                             <label className="text-xs font-bold text-slate-500 uppercase">Nome (Título)</label>
                             {!isPremium && <ProBadge />}
                         </div>
-                        <select value={customization.title_font_family} onChange={(e) => setCustomization({...customization, title_font_family: e.target.value})} className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-sm">{ALL_FONTS.map(f => <option key={f.name} value={f.name}>{f.label}</option>)}</select>
+                        <select 
+                            value={customization.title_font_family} 
+                            onChange={(e) => setCustomization({...customization, title_font_family: e.target.value})} 
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-sm"
+                        >
+                            {ALL_FONTS.map(f => (
+                                <option 
+                                    key={f.name} 
+                                    value={f.name} 
+                                    disabled={!isPremium && f.isPro}
+                                >
+                                    {f.label} {f.isPro ? '[PRO]' : ''}
+                                </option>
+                            ))}
+                        </select>
                         <div className="flex bg-slate-900 border border-slate-700 rounded-lg p-1">
                             {[{l:'P',v:'xl'}, {l:'M',v:'3xl'}, {l:'G',v:'4xl'}, {l:'GG',v:'5xl'}].map(s => (
                                 <button key={s.v} onClick={() => setCustomization({...customization, title_font_size: s.v})} className={`flex-1 py-1.5 text-xs font-bold rounded ${customization.title_font_size === s.v ? 'bg-yellow-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}>{s.l}</button>
@@ -361,7 +485,21 @@ export default function AppearancePage() {
                             <label className="text-xs font-bold text-slate-500 uppercase">BIO / LINKS</label>
                             {!isPremium && <ProBadge />}
                         </div>
-                        <select value={customization.font_family} onChange={(e) => setCustomization({...customization, font_family: e.target.value})} className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-sm">{ALL_FONTS.map(f => <option key={f.name} value={f.name}>{f.label}</option>)}</select>
+                        <select 
+                            value={customization.font_family} 
+                            onChange={(e) => setCustomization({...customization, font_family: e.target.value})} 
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-sm"
+                        >
+                            {ALL_FONTS.map(f => (
+                                <option 
+                                    key={f.name} 
+                                    value={f.name}
+                                    disabled={!isPremium && f.isPro}
+                                >
+                                    {f.label} {f.isPro ? '[PRO]' : ''}
+                                </option>
+                            ))}
+                        </select>
                         <div className="flex bg-slate-900 border border-slate-700 rounded-lg p-1">
                             {[{l:'P',v:'sm'}, {l:'M',v:'base'}, {l:'G',v:'lg'}].map(s => (
                                 <button key={s.v} onClick={() => setCustomization({...customization, bio_font_size: s.v})} className={`flex-1 py-1.5 text-xs font-bold rounded ${customization.bio_font_size === s.v ? 'bg-yellow-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}>{s.l}</button>

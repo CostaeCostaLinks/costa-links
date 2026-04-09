@@ -9,9 +9,13 @@ interface PreviewPhoneProps {
 export default function PreviewPhone({ profile, links }: PreviewPhoneProps) {
   if (!profile) return null;
 
-  // --- LÓGICA DE ESCALA E CORES (Mantida) ---
+  // --- CORREÇÃO: Ensinando os tamanhos sm, base e lg para o Preview ---
   const getScale = (size: string | undefined, defaultClass: string) => {
-    const map: Record<string, string> = { 'small': 'text-[10px]', 'medium': 'text-xs', 'large': 'text-sm', 'xl': 'text-base', '2xl': 'text-lg', '3xl': 'text-xl', '4xl': 'text-2xl', '5xl': 'text-3xl' };
+    const map: Record<string, string> = { 
+        'small': 'text-[10px]', 'medium': 'text-xs', 'large': 'text-sm', 
+        'sm': 'text-[10px]', 'base': 'text-xs', 'lg': 'text-sm',
+        'xl': 'text-base', '2xl': 'text-lg', '3xl': 'text-xl', '4xl': 'text-2xl', '5xl': 'text-3xl' 
+    };
     return map[size || ''] || defaultClass;
   };
 
@@ -45,14 +49,13 @@ export default function PreviewPhone({ profile, links }: PreviewPhoneProps) {
         alignItems: 'center',
         justifyContent: 'space-between',
         width: '100%',
-        padding: '16px 20px', // Padding mais encorpado que criamos
+        padding: '16px 20px',
         borderRadius: '9999px',
         marginBottom: '12px',
         cursor: 'pointer',
         transition: 'all 0.2s',
     };
 
-    // LÓGICA DO BOTÃO PRINCIPAL (1º Link)
     if (isHighlight) {
         const bgStyle = profile.use_gradient 
             ? { background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` }
@@ -68,7 +71,6 @@ export default function PreviewPhone({ profile, links }: PreviewPhoneProps) {
         };
     }
 
-    // LÓGICA DOS BOTÕES SECUNDÁRIOS (Transparentes com Borda)
     if (isGhost) {
         return { 
             ...baseStyle, 
@@ -79,51 +81,40 @@ export default function PreviewPhone({ profile, links }: PreviewPhoneProps) {
         };
     }
 
-    // Padrão (Sem destaque ativo e usando gradiente)
     if (profile.use_gradient) {
       return { 
           ...baseStyle, 
           color: profile.button_text_color || '#000000', 
-          borderWidth: profile.button_border_width || '0px',
-          borderColor: profile.button_border_color || 'transparent',
+          borderWidth: (profile.use_borders && profile.button_border_width) ? profile.button_border_width : '0px',
+          borderColor: (profile.use_borders && profile.button_border_color) ? profile.button_border_color : 'transparent',
           background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` 
       };
     }
     
-    // Padrão (Sólido)
     return { 
         ...baseStyle, 
         backgroundColor: profile.button_color || '#EAB308',
         color: profile.button_text_color || '#000000',
-        borderColor: (profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : (profile.button_color || '#EAB308'),
-        borderWidth: (!profile.button_border_width || profile.button_border_width === '0px') ? '1px' : profile.button_border_width
+        borderColor: (profile.use_borders && profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : 'transparent',
+        borderWidth: (profile.use_borders && profile.button_border_width) ? profile.button_border_width : '0px'
     };
   };
+
   const showBanner = profile.banner_url && profile.display_banner !== false;
 
   return (
     <div className="w-full h-full overflow-y-auto scrollbar-hide relative flex flex-col" style={{ backgroundColor: styles.bg }}>
       
-      {/* CORREÇÃO 1: Banner Absoluto 
-          Ao invés de empilhar o banner, colocamos ele 'atrás' (absolute) e fixo no topo.
-          Isso garante que ele sempre apareça se showBanner for true, sem empurrar o layout errado.
-      */}
       {showBanner ? (
         <div className="absolute top-0 left-0 w-full h-40 z-0">
           <img src={profile.banner_url} className="w-full h-full object-cover" alt="banner" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40" />
-          {/* Gradiente para suavizar a transição para a cor de fundo */}
           <div className="absolute bottom-0 w-full h-16" style={{ background: `linear-gradient(to top, ${styles.bg}, transparent)` }} />
         </div>
       ) : (
-        // Um espaçador suave se não tiver banner, para manter consistência visual
         <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-white/5 to-transparent z-0" />
       )}
 
-      {/* CORREÇÃO 2: Conteúdo com Padding (padding-top)
-          Ao invés de margem negativa (-mt), usamos padding-top (pt-28) para empurrar o avatar 
-          para baixo, revelando o banner. O z-10 garante que o avatar fique SOBRE o banner.
-      */}
       <div className={`relative z-10 px-6 flex flex-col items-center pb-10 transition-all duration-300 ${showBanner ? 'pt-28' : 'pt-12'}`}>
         
         <div 
@@ -157,12 +148,8 @@ export default function PreviewPhone({ profile, links }: PreviewPhoneProps) {
             const Icon = getIconComponent(link.icon || 'link');
             const buttonStyle = getButtonStyle(index);
             
-            const isHighlight = profile.highlight_first_link && index === 0;
-            const isGhost = profile.highlight_first_link && index !== 0;
-            
-            let iconColor = styles.iconColor;
-            if (isHighlight) iconColor = profile.button_text_color || '#000000';
-            if (isGhost) iconColor = profile.title_color || '#FFFFFF';
+            // --- CORREÇÃO: O usuário agora tem controle total da cor do ícone ---
+            const iconColor = profile.icon_color || profile.button_text_color || '#000000';
 
             return (
               <div key={link.id || index} style={buttonStyle} className="shadow-sm">

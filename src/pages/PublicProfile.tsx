@@ -1,4 +1,3 @@
-// src/pages/PublicProfile.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -14,14 +13,12 @@ export default function PublicProfile() {
   const [links, setLinks] = useState<Link[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Estados de Interface
   const [showQRCode, setShowQRCode] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Fecha o menu ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -49,8 +46,13 @@ export default function PublicProfile() {
   if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-yellow-500 animate-pulse">Carregando...</div>;
   if (!profile) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Perfil não encontrado 😔</div>;
 
+  // --- CORREÇÃO: Ensinando os tamanhos sm, base e lg para a página pública ---
   const getScale = (size: string | undefined, defaultClass: string) => {
-      const map: Record<string, string> = { 'small': 'text-sm', 'medium': 'text-base', 'large': 'text-lg', 'xl': 'text-xl', '2xl': 'text-2xl', '3xl': 'text-3xl', '4xl': 'text-4xl', '5xl': 'text-5xl' };
+      const map: Record<string, string> = { 
+          'small': 'text-sm', 'medium': 'text-base', 'large': 'text-lg', 
+          'sm': 'text-sm', 'base': 'text-base', 'lg': 'text-lg',
+          'xl': 'text-xl', '2xl': 'text-2xl', '3xl': 'text-3xl', '4xl': 'text-4xl', '5xl': 'text-5xl' 
+      };
       return map[size || ''] || defaultClass;
   };
 
@@ -65,7 +67,6 @@ export default function PublicProfile() {
     titleFont: profile.title_font_family || 'Inter'
   };
 
-  // --- LÓGICA DE ESTILO DOS BOTÕES (COM DESTAQUE E FANTASMA) ---
   const getButtonStyle = (index: number) => {
     const isHighlight = profile.highlight_first_link && index === 0;
     const isGhost = profile.highlight_first_link && index !== 0;
@@ -76,7 +77,6 @@ export default function PublicProfile() {
         borderStyle: 'solid',
     };
 
-    // 1º Link (Principal)
     if (isHighlight) {
         const bgStyle = profile.use_gradient 
             ? { background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` }
@@ -92,7 +92,6 @@ export default function PublicProfile() {
         };
     }
 
-    // Links Secundários (Fantasmas/Transparentes)
     if (isGhost) {
         return { 
             ...baseStyle, 
@@ -103,24 +102,22 @@ export default function PublicProfile() {
         };
     }
 
-    // Padrão (Sem destaque ativo e usando gradiente)
     if (profile.use_gradient) {
       return { 
           ...baseStyle, 
           color: profile.button_text_color || '#000000', 
-          borderWidth: profile.button_border_width || '0px',
-          borderColor: profile.button_border_color || 'transparent',
+          borderWidth: (profile.use_borders && profile.button_border_width) ? profile.button_border_width : '0px',
+          borderColor: (profile.use_borders && profile.button_border_color) ? profile.button_border_color : 'transparent',
           background: `linear-gradient(to right, ${profile.gradient_from || '#EAB308'}, ${profile.gradient_to || '#CA8A04'})` 
       };
     }
     
-    // Padrão (Sólido)
     return { 
         ...baseStyle, 
         backgroundColor: profile.button_color || '#EAB308',
         color: profile.button_text_color || '#000000',
-        borderColor: (profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : (profile.button_color || '#EAB308'),
-        borderWidth: (!profile.button_border_width || profile.button_border_width === '0px') ? '1px' : profile.button_border_width
+        borderColor: (profile.use_borders && profile.button_border_color && profile.button_border_color !== 'transparent') ? profile.button_border_color : 'transparent',
+        borderWidth: (profile.use_borders && profile.button_border_width) ? profile.button_border_width : '0px'
     };
   };
 
@@ -152,7 +149,6 @@ export default function PublicProfile() {
   return (
     <div className="min-h-screen w-full flex justify-center overflow-x-hidden relative" style={{ backgroundColor: styles.bg }}>
       
-      {/* BANNER ESTILO: EXPANDIDO (Imersivo com Brilho) */}
       {bannerStyle === 'expanded' && (
           <div className="absolute top-0 left-0 w-full h-[400px] md:h-[500px] z-0 pointer-events-none overflow-hidden">
               <div 
@@ -168,12 +164,10 @@ export default function PublicProfile() {
           </div>
       )}
 
-      {/* CONTAINER CENTRAL */}
       <div className={containerClasses} style={{ backgroundColor: bannerStyle === 'expanded' ? 'transparent' : styles.bg }}>
         
         {!hasBanner && bannerStyle !== 'expanded' && <div className="w-full h-16 shrink-0"></div>}
         
-        {/* BANNER ESTILO: TOPO (Clássico) */}
         {hasBanner && bannerStyle === 'top' && (
             <div className="w-full h-48 relative z-0 shrink-0">
                 <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
@@ -181,7 +175,6 @@ export default function PublicProfile() {
             </div>
         )}
 
-        {/* --- HEADER (Botões de Ação) --- */}
         <div className="absolute top-4 right-4 z-50 flex gap-2" ref={menuRef}>
             <div className="relative">
                 <button onClick={() => setShowMenu(!showMenu)} className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors border border-white/10 shadow-lg">
@@ -208,10 +201,8 @@ export default function PublicProfile() {
             </button>
         </div>
 
-        {/* CONTEÚDO PRINCIPAL */}
         <div className="flex-1 w-full px-6 pb-16 flex flex-col items-center relative z-10">
             
-            {/* AVATAR */}
             <div className={`mb-4 relative group flex flex-col items-center ${hasBanner ? (bannerStyle === 'top' ? '-mt-16' : 'mt-12 md:mt-20') : 'mt-4'}`}>
                 <div className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 object-cover overflow-hidden shadow-2xl bg-slate-800" style={{ borderColor: profile.use_gradient ? profile.gradient_from : profile.button_color }}>
                     {profile.avatar_url ? (
@@ -224,7 +215,6 @@ export default function PublicProfile() {
                 </div>
             </div>
 
-            {/* Títulos e Bio */}
             <h1 className={`${titleClass} font-bold mb-2 text-center drop-shadow-md leading-tight break-words max-w-full`} style={{ fontFamily: styles.titleFont, color: styles.titleColor }}>
             {profile.full_name}
             </h1>
@@ -232,21 +222,18 @@ export default function PublicProfile() {
             {profile.bio}
             </p>
 
-            {/* Site */}
             {profile.website && (
                 <a href={profile.website} target="_blank" rel="noopener noreferrer" className="mb-8 flex items-center gap-2 text-sm font-medium opacity-80 hover:opacity-100 hover:scale-105 transition-all py-1 px-3 rounded-full bg-white/5 border border-white/10" style={{ color: styles.titleColor }}>
                     <Globe className="w-4 h-4" /> Website
                 </a>
             )}
 
-            {/* Links */}
             <div className="w-full space-y-4 pb-12">
             {links.map((link, index) => {
                 const Icon = getIconComponent(link.icon || 'link');
-                const isGhost = profile.highlight_first_link && index !== 0;
                 
-                let iconColor = profile.icon_color || profile.button_text_color || '#000000';
-                if (isGhost) iconColor = profile.title_color || '#FFFFFF';
+                // --- CORREÇÃO: O usuário agora tem controle total da cor do ícone ---
+                const iconColor = profile.icon_color || profile.button_text_color || '#000000';
 
                 return (
                 <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="block group transition-transform hover:scale-[1.02] active:scale-95">
@@ -262,7 +249,6 @@ export default function PublicProfile() {
             })}
             </div>
 
-            {/* Branding */}
             {profile.display_branding !== false && (
                 <div className="mt-auto pt-8 pb-4">
                     <RouterLink to="/" className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white px-5 py-2 rounded-full font-bold text-xs shadow-lg hover:scale-105 hover:bg-white/20 transition-all">
@@ -271,7 +257,6 @@ export default function PublicProfile() {
                 </div>
             )}
 
-            {/* Rodapé Legal */}
             <div className="w-full pt-6 flex justify-center items-center gap-4 text-[10px] uppercase font-bold tracking-wider opacity-50 hover:opacity-100 transition-opacity" style={{ color: styles.titleColor }}>
                 <RouterLink to="/privacidade" className="hover:underline">Privacidade</RouterLink>
                 <span>•</span>
@@ -281,7 +266,6 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      {/* RODAPÉ FLUTUANTE (QR CODE) */}
       {!showQRCode && (
           <div className="fixed bottom-6 right-6 z-40 hidden md:block animate-in fade-in slide-in-from-right-10">
               <button onClick={() => setShowQRCode(true)} className="group bg-white p-3 rounded-xl shadow-2xl flex flex-col items-center gap-2 hover:scale-105 transition-transform border border-slate-200">
@@ -291,7 +275,6 @@ export default function PublicProfile() {
           </div>
       )}
 
-      {/* Modal QR Code */}
       {showQRCode && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowQRCode(false)}>
               <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full relative" onClick={e => e.stopPropagation()}>
