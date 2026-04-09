@@ -6,7 +6,7 @@ import { Link as LinkType } from '@/types';
 import Input from '@/components/Input';
 import { IconSelector, getIconComponent } from '@/components/IconSelector';
 import { toast } from 'sonner';
-import { Plus, Trash2, Pencil, X, GripVertical, Link as LinkIcon, Copy } from 'lucide-react';
+import { Plus, Trash2, Pencil, X, GripVertical, Link as LinkIcon, Copy, ChevronUp, ChevronDown } from 'lucide-react';
 import Button from '@/components/Button';
 import { useAdminContext } from '@/layouts/AdminLayout';
 import { Link as RouterLink } from 'react-router-dom';
@@ -19,6 +19,8 @@ export default function LinksPage() {
   const [links, setLinks] = useState<LinkType[]>([]);
   const [loading, setLoading] = useState(true);
   
+  const [isMobile, setIsMobile] = useState(false);
+  
   const [newLink, setNewLink] = useState({ title: '', url: '', icon: 'link' });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -29,6 +31,11 @@ export default function LinksPage() {
 
   useEffect(() => {
     if (user) loadLinks();
+    
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile(); 
+    window.addEventListener('resize', checkMobile); 
+    return () => window.removeEventListener('resize', checkMobile);
   }, [user]);
 
   const loadLinks = async () => {
@@ -83,6 +90,7 @@ export default function LinksPage() {
     toast.success('Link copiado!');
   };
 
+  // --- REORDENAÇÃO DRAG AND DROP (Computador) ---
   const handleSort = async () => {
     if (dragItem.current === null || dragOverItem.current === null) return;
     if (dragItem.current === dragOverItem.current) return; 
@@ -91,13 +99,31 @@ export default function LinksPage() {
     const draggedItemContent = _links.splice(dragItem.current, 1)[0];
     _links.splice(dragOverItem.current, 0, draggedItemContent);
 
-    const updatedLinks = _links.map((link, index) => ({ ...link, order_index: index }));
+    saveNewOrder(_links);
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
+  // --- NOVA FUNÇÃO: REORDENAÇÃO VIA SETAS (Mobile) ---
+  const moveLink = (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === links.length - 1) return;
+
+    const _links = [...links];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    // Inverte as posições no Array
+    [_links[index], _links[swapIndex]] = [_links[swapIndex], _links[index]];
+    
+    saveNewOrder(_links);
+  };
+
+  // Função isolada para salvar a ordem no banco para reaproveitarmos
+  const saveNewOrder = async (reorderedLinks: LinkType[]) => {
+    const updatedLinks = reorderedLinks.map((link, index) => ({ ...link, order_index: index }));
     
     setLinks(updatedLinks);
     triggerPreviewRefresh();
-
-    dragItem.current = null;
-    dragOverItem.current = null;
 
     try {
       await Promise.all(
@@ -107,7 +133,7 @@ export default function LinksPage() {
       );
     } catch (error: any) {
       console.error(error);
-      toast.error('Erro ao salvar a nova ordem dos links');
+      toast.error('Erro ao salvar a nova ordem');
       loadLinks(); 
     }
   };
@@ -116,7 +142,6 @@ export default function LinksPage() {
   const publicUrl = `${window.location.origin}/u/${username}`;
 
   return (
-    // CORREÇÃO 1: Adicionado max-w-full e min-w-0 no container principal
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 w-full max-w-full min-w-0">
       
       <OnboardingProgress profile={profile} linkCount={links.length} />
@@ -136,7 +161,6 @@ export default function LinksPage() {
 
       <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-start relative w-full">
         
-        {/* CORREÇÃO 2: A Mágica do min-w-0 na coluna principal */}
         <div className="space-y-6 min-w-0 w-full">
             
             <div className="flex p-1 bg-slate-900/50 rounded-xl w-full border border-slate-800/50">
@@ -167,21 +191,46 @@ export default function LinksPage() {
                 return (
                     <div 
                       key={link.id} 
-                      draggable
+                      draggable={!isMobile} 
                       onDragStart={() => (dragItem.current = index)}
                       onDragEnter={() => (dragOverItem.current = index)}
                       onDragEnd={handleSort}
                       onDragOver={(e) => e.preventDefault()}
-                      className="group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm hover:border-yellow-500/50 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing gap-3"
+                      className={`group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm transition-all flex items-center justify-between gap-2 ${!isMobile ? 'cursor-grab active:cursor-grabbing hover:border-yellow-500/50' : ''}`}
                     >
-                      {/* CORREÇÃO 3: overflow-hidden no bloco de texto para forçar o truncate */}
                       <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0 overflow-hidden">
-                          <div className="text-slate-500 group-hover:text-yellow-500 transition-colors shrink-0 hidden sm:block">
-                            <GripVertical className="w-5 h-5" />
-                          </div>
+                          
+                          {!isMobile && (
+                            <div className="text-slate-500 group-hover:text-yellow-500 transition-colors shrink-0">
+                              <GripVertical className="w-5 h-5" />
+                            </div>
+                          )}
+
+                          {/* SETAS DE ORDENAÇÃO PARA MOBILE */}
+                          {isMobile && links.length > 1 && (
+                            <div className="flex flex-col shrink-0 gap-1 bg-slate-950 border border-slate-800 rounded-lg p-0.5">
+                                <button 
+                                  onClick={() => moveLink(index, 'up')} 
+                                  disabled={index === 0}
+                                  className={`p-1 rounded flex items-center justify-center transition-colors ${index === 0 ? 'opacity-20 cursor-not-allowed' : 'active:bg-yellow-500/20 active:text-yellow-500'}`}
+                                >
+                                  <ChevronUp className="w-4 h-4 text-slate-400" />
+                                </button>
+                                <div className="h-[1px] w-full bg-slate-800"></div>
+                                <button 
+                                  onClick={() => moveLink(index, 'down')} 
+                                  disabled={index === links.length - 1}
+                                  className={`p-1 rounded flex items-center justify-center transition-colors ${index === links.length - 1 ? 'opacity-20 cursor-not-allowed' : 'active:bg-yellow-500/20 active:text-yellow-500'}`}
+                                >
+                                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                                </button>
+                            </div>
+                          )}
+
                           <div className="p-2 bg-slate-950 rounded-lg text-yellow-500 border border-slate-800 shrink-0">
                             <Icon className="w-5 h-5" />
                           </div>
+                          
                           <div className="flex-1 min-w-0 overflow-hidden">
                             <h3 className="font-bold text-white truncate w-full block text-sm md:text-base">{link.title}</h3>
                             <p className="text-[10px] md:text-xs text-slate-400 truncate w-full block">{link.url}</p>
@@ -189,10 +238,10 @@ export default function LinksPage() {
                       </div>
                       
                       <div className="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => startEditing(link)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg shrink-0">
+                          <button onClick={() => startEditing(link)} className="p-2.5 bg-slate-800 md:bg-transparent text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg shrink-0 transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDelete(link.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg shrink-0">
+                          <button onClick={() => handleDelete(link.id)} className="p-2.5 bg-red-500/10 md:bg-transparent text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg shrink-0 transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </button>
                       </div>
