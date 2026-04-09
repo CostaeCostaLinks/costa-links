@@ -477,20 +477,7 @@ export default function Admin() {
                   <p className="text-lg font-bold text-white">R$ 9,90</p>
                 </button>
               </div>
-              
-              {/* BOTÃO SECRETO DE TESTE */}
-              <div className="mt-6 pt-4 border-t border-slate-800">
-                <button 
-                  onClick={() => {
-                    const checkoutUrl = `${KIWIFY_TEST_URL}?email=${encodeURIComponent(user?.email || '')}`;
-                    window.open(checkoutUrl, '_blank');
-                  }} 
-                  className="text-[10px] text-slate-500 hover:text-slate-400 underline"
-                >
-                  Dev: Testar Fluxo de PIX (R$ 5)
-                </button>
-              </div>
-              
+                        
             </div>
           </div>
         </div>

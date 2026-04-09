@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { User, Lock, CreditCard, ExternalLink, Loader2 } from 'lucide-react'; 
 
 // URL do portal de compradores da Kiwify
-const KIWIFY_PORTAL_URL = "https://kiwify.com.br/minhas-compras";
+const KIWIFY_PORTAL_URL = "https://dashboard.kiwify.com.br/minhas-compras";
 
 export default function SettingsPage() {
   const { user } = useAuth();

@@ -80,12 +80,7 @@ export default function AdminLayout() {
                   <span className="font-bold text-white">Plano Mensal (R$ 9,90)</span>
                </button>
                
-               {/* BOTÃO SECRETO DE TESTE */}
-               <div className="mt-4 pt-4 border-t border-slate-800">
-                 <button onClick={() => window.open(`${KIWIFY_TEST_URL}?email=${encodeURIComponent(user?.email || '')}`, '_blank')} className="text-[10px] text-slate-500 hover:text-slate-400 underline">
-                   Dev: Testar Fluxo de PIX (R$ 5)
-                 </button>
-               </div>
+               
             </div>
           </div>
         </div>
