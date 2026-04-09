@@ -35,7 +35,8 @@ export default function Login() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { username, full_name: fullName } },
+          // --- ADICIONADO: O e-mail agora é salvo na tabela profiles ---
+          options: { data: { username, full_name: fullName, email: email } },
         });
         if (error) throw error;
         toast.success('Conta criada! Faça login.');

@@ -10,9 +10,10 @@ import { IconSelector, getIconComponent } from '@/components/IconSelector';
 import { toast } from 'sonner';
 import { Trash2, Eye, LogOut, Plus, Copy, Palette, Layout, Link as LinkIcon, Save, Upload, Image as ImageIcon, Lock, Crown, Pencil, X, XCircle, Search } from 'lucide-react';
 
-// --- LINKS DE PAGAMENTO STRIPE ---
-const STRIPE_MONTHLY_URL = 'https://buy.stripe.com/8x25kF5178LYfWXe1TfMA00'; // Seu link mensal antigo
-const STRIPE_YEARLY_URL = 'https://buy.stripe.com/fZu8wRbpv8LY9yz2jbfMA01';  // Seu NOVO link anual
+// --- LINKS DE PAGAMENTO KIWIFY ---
+const KIWIFY_MONTHLY_URL = 'https://pay.kiwify.com.br/1ePpknF';
+const KIWIFY_YEARLY_URL = 'https://pay.kiwify.com.br/g4FAyee';
+const KIWIFY_TEST_URL = 'https://pay.kiwify.com.br/XUIDPVG';
 
 // --- CONFIGURAÇÕES DE FONTES ---
 const ALL_FONTS = [
@@ -169,7 +170,7 @@ export default function Admin() {
   
   // MODAIS
   const [showGallery, setShowGallery] = useState(false);
-  const [showPricingModal, setShowPricingModal] = useState(false); // NOVO: Controle do Modal de Preços
+  const [showPricingModal, setShowPricingModal] = useState(false); 
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   
   const [newLink, setNewLink] = useState({ title: '', url: '', icon: 'link' });
@@ -232,7 +233,6 @@ export default function Admin() {
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  // Botão apenas abre o modal agora
   const handleSubscribeClick = () => {
     setShowPricingModal(true);
   };
@@ -423,7 +423,7 @@ export default function Admin() {
         </div>
       )}
 
-      {/* --- MODAL DE PREÇOS (NOVO) --- */}
+      {/* --- MODAL DE PREÇOS (KIWIFY) --- */}
       {showPricingModal && (
         <div className="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
@@ -443,10 +443,10 @@ export default function Admin() {
               <p className="text-slate-400 mb-8">Desbloqueie todos os temas, fontes e remova limites.</p>
 
               <div className="space-y-4">
-                {/* OPÇÃO ANUAL (DESTAQUE) */}
+                {/* OPÇÃO ANUAL */}
                 <button
                   onClick={() => {
-                    const checkoutUrl = `${STRIPE_YEARLY_URL}?client_reference_id=${user?.id}`;
+                    const checkoutUrl = `${KIWIFY_YEARLY_URL}?email=${encodeURIComponent(user?.email || '')}`;
                     window.open(checkoutUrl, '_blank');
                   }}
                   className="w-full group relative p-4 rounded-xl border-2 border-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20 transition-all text-left flex items-center justify-between"
@@ -465,7 +465,7 @@ export default function Admin() {
                 {/* OPÇÃO MENSAL */}
                 <button
                   onClick={() => {
-                    const checkoutUrl = `${STRIPE_MONTHLY_URL}?client_reference_id=${user?.id}`;
+                    const checkoutUrl = `${KIWIFY_MONTHLY_URL}?email=${encodeURIComponent(user?.email || '')}`;
                     window.open(checkoutUrl, '_blank');
                   }}
                   className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/50 hover:bg-slate-800 transition-all text-left flex items-center justify-between"
@@ -478,7 +478,19 @@ export default function Admin() {
                 </button>
               </div>
               
-              <p className="text-xs text-slate-500 mt-6">Cancelamento fácil a qualquer momento.</p>
+              {/* BOTÃO SECRETO DE TESTE */}
+              <div className="mt-6 pt-4 border-t border-slate-800">
+                <button 
+                  onClick={() => {
+                    const checkoutUrl = `${KIWIFY_TEST_URL}?email=${encodeURIComponent(user?.email || '')}`;
+                    window.open(checkoutUrl, '_blank');
+                  }} 
+                  className="text-[10px] text-slate-500 hover:text-slate-400 underline"
+                >
+                  Dev: Testar Fluxo de PIX (R$ 5)
+                </button>
+              </div>
+              
             </div>
           </div>
         </div>

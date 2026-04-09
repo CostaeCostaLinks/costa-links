@@ -1,23 +1,23 @@
 // src/pages/admin/SettingsPage.tsx
-import { useState, useEffect } from 'react'; // CORREÇÃO: Importado useEffect
+import { useState, useEffect } from 'react'; 
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { toast } from 'sonner';
-import { User, Lock, CreditCard, ExternalLink, Loader2 } from 'lucide-react'; // CORREÇÃO: Adicionado Loader2 para feedback
+import { User, Lock, CreditCard, ExternalLink, Loader2 } from 'lucide-react'; 
 
-const STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/8x25kF5178LYfWXe1TfMA00";
+// URL do portal de compradores da Kiwify
+const KIWIFY_PORTAL_URL = "https://kiwify.com.br/minhas-compras";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState(''); // CORREÇÃO: Inicializado vazio para carregar do banco
-  const [username, setUsername] = useState(''); // CORREÇÃO: Adicionado estado para o slug (username)
+  const [fullName, setFullName] = useState(''); 
+  const [username, setUsername] = useState(''); 
 
-  // CORREÇÃO: useEffect para carregar dados do perfil (incluindo slug) ao montar o componente
   useEffect(() => {
     if (user) {
       getProfile();
@@ -47,19 +47,15 @@ export default function SettingsPage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // CORREÇÃO: Validação para o slug
     if (!username) return toast.error('Nome de Usuário (slug) é obrigatório.');
 
     setLoading(true);
     try {
-      // Atualiza metadados da autenticação (opcional, mas bom manter sincronizado)
       const { error: authError } = await supabase.auth.updateUser({ 
         data: { full_name: fullName, username: username } 
       });
       if (authError) throw authError;
 
-      // CORREÇÃO: Atualiza a tabela profiles incluindo o username (slug)
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ full_name: fullName, username: username })
@@ -92,12 +88,9 @@ export default function SettingsPage() {
 
   return (
     <div className="animate-in fade-in duration-500">
-      
-      {/* TÍTULO DA PÁGINA */}
       <h1 className="text-3xl font-serif font-bold text-white mb-8">Configurações da Conta</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* COLUNA ESQUERDA (2/3): Formulários */}
         <div className="lg:col-span-2 space-y-8">
           <section className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
             <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-800">
@@ -105,30 +98,14 @@ export default function SettingsPage() {
               <div><h2 className="text-lg font-bold text-white">Dados Pessoais</h2><p className="text-sm text-slate-400">Atualize como você aparece na plataforma.</p></div>
             </div>
             <form onSubmit={handleUpdateProfile} className="space-y-6">
-              {/* CORREÇÃO VISUAL MÍNIMA: Ajustada a grade para acomodar 3 campos sem quebrar o design */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Input label="E-mail" value={user?.email} disabled className="bg-slate-950 border-slate-800 text-slate-500 opacity-60 cursor-not-allowed md:col-span-1" />
-                  
-                  {/* CORREÇÃO: Campo Nome de Usuário (slug) adicionado aqui, respeitando o design */}
-                  <Input 
-                    label="Nome de Usuário (slug)" 
-                    value={username} 
-                    onChange={(e) => setUsername(e.target.value)} 
-                    className={inputDarkClass} 
-                    placeholder="seu_usuario"
-                  />
-
-                  <Input 
-                    label="Nome Completo" 
-                    value={fullName} 
-                    onChange={(e) => setFullName(e.target.value)} 
-                    className={`${inputDarkClass} md:col-span-2`} 
-                  />
+                  <Input label="Nome de Usuário (slug)" value={username} onChange={(e) => setUsername(e.target.value)} className={inputDarkClass} placeholder="seu_usuario" />
+                  <Input label="Nome Completo" value={fullName} onChange={(e) => setFullName(e.target.value)} className={`${inputDarkClass} md:col-span-2`} />
               </div>
               <div className="flex justify-end">
                 <Button type="submit" disabled={loading} className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold px-8 shadow-lg shadow-yellow-500/10">
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Salvar Alterações
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Salvar Alterações
                 </Button>
               </div>
             </form>
@@ -149,19 +126,18 @@ export default function SettingsPage() {
           </section>
         </div>
 
-        {/* COLUNA DIREITA (1/3): Assinatura */}
         <div className="lg:col-span-1 sticky top-8">
           <section className="bg-gradient-to-b from-slate-900 to-slate-950 p-8 rounded-3xl text-white shadow-xl border border-slate-800 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl group-hover:bg-yellow-500/10 transition-colors"></div>
             <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm"><CreditCard className="w-6 h-6 text-yellow-500" /></div>
-                  <div><h2 className="text-xl font-bold">Assinatura</h2><p className="text-slate-400 text-sm">Gerencie faturas e plano</p></div>
+                  <div><h2 className="text-xl font-bold">Assinatura</h2><p className="text-slate-400 text-sm">Gerencie sua fatura Kiwify</p></div>
                 </div>
                 <div className="space-y-6">
-                  <p className="text-slate-300 text-sm leading-relaxed">Acesse o portal do cliente para baixar suas notas fiscais, trocar o cartão de crédito ou cancelar a assinatura a qualquer momento.</p>
-                  <button onClick={() => window.open(STRIPE_PORTAL_URL, '_blank')} className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-yellow-500/20">Acessar Portal do Cliente <ExternalLink className="w-4 h-4" /></button>
-                  <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-4 border-t border-white/5"><Lock className="w-3 h-3" /> Pagamentos seguros via Stripe</div>
+                  <p className="text-slate-300 text-sm leading-relaxed">Acesse o portal da Kiwify para visualizar suas cobranças, trocar o cartão de crédito ou cancelar a assinatura a qualquer momento.</p>
+                  <button onClick={() => window.open(KIWIFY_PORTAL_URL, '_blank')} className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-yellow-500/20">Portal da Kiwify <ExternalLink className="w-4 h-4" /></button>
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-4 border-t border-white/5"><Lock className="w-3 h-3" /> Pagamentos processados por Kiwify</div>
                 </div>
             </div>
           </section>
