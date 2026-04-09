@@ -87,25 +87,19 @@ export default function LinksPage() {
   // --- FUNÇÃO DE REORDENAÇÃO (DRAG AND DROP) ---
   const handleSort = async () => {
     if (dragItem.current === null || dragOverItem.current === null) return;
-    if (dragItem.current === dragOverItem.current) return; // Não mudou de lugar
+    if (dragItem.current === dragOverItem.current) return;
 
-    // 1. Reordena localmente no array
     const _links = [...links];
     const draggedItemContent = _links.splice(dragItem.current, 1)[0];
     _links.splice(dragOverItem.current, 0, draggedItemContent);
 
-    // 2. Atualiza o order_index de cada item baseado na nova posição
     const updatedLinks = _links.map((link, index) => ({ ...link, order_index: index }));
-    
-    // 3. Atualiza a tela imediatamente (Optimistic UI)
     setLinks(updatedLinks);
     triggerPreviewRefresh();
 
-    // Resetando os ponteiros
     dragItem.current = null;
     dragOverItem.current = null;
 
-    // 4. Salva as novas posições no Supabase em background
     try {
       await Promise.all(
         updatedLinks.map(link => 
@@ -115,7 +109,7 @@ export default function LinksPage() {
     } catch (error: any) {
       console.error(error);
       toast.error('Erro ao salvar a nova ordem dos links');
-      loadLinks(); // Se der erro, recarrega a ordem original do banco
+      loadLinks(); 
     }
   };
 
@@ -125,19 +119,18 @@ export default function LinksPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       
-      {/* 1. BARRA DE PROGRESSO (ONBOARDING) - APARECE SÓ SE INCOMPLETO */}
       <OnboardingProgress profile={profile} linkCount={links.length} />
 
-      {/* 2. BANNER LINK PÚBLICO */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-2 pl-4 flex flex-col sm:flex-row items-center justify-between shadow-2xl shadow-black/20 gap-4 sm:gap-0">
-         <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
+      {/* BANNER LINK PÚBLICO (Corrigido para truncar no mobile) */}
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-3 flex flex-col sm:flex-row items-center justify-between shadow-2xl shadow-black/20 gap-3 sm:gap-0">
+         <div className="flex items-center gap-3 flex-1 min-w-0 w-full">
              <div className="p-2.5 bg-yellow-500/10 rounded-full text-yellow-500 shrink-0"><LinkIcon className="w-5 h-5" /></div>
-             <div className="flex flex-col min-w-0">
+             <div className="flex flex-col min-w-0 flex-1">
                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Seu Link Público</span>
                  <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-white font-bold truncate hover:underline text-sm md:text-base">{publicUrl}</a>
              </div>
          </div>
-         <button onClick={copyToClipboard} className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-yellow-500/10 sm:ml-2">
+         <button onClick={copyToClipboard} className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-yellow-500/10 shrink-0 mt-3 sm:mt-0 sm:ml-2">
              <Copy className="w-4 h-4" /> <span className="hidden sm:inline">Copiar</span> <span className="sm:hidden">Copiar Link</span>
          </button>
       </div>
@@ -180,22 +173,23 @@ export default function LinksPage() {
                       onDragEnter={() => (dragOverItem.current = index)}
                       onDragEnd={handleSort}
                       onDragOver={(e) => e.preventDefault()}
-                      className="group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm hover:border-yellow-500/50 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing"
+                      className="group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm hover:border-yellow-500/50 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing gap-2"
                     >
-                      <div className="flex items-center gap-4 overflow-hidden">
-                          <div className="text-slate-500 group-hover:text-yellow-500 transition-colors">
+                      {/* CARD DO LINK (Corrigido para truncar corretamente e não estourar a tela) */}
+                      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                          <div className="text-slate-500 group-hover:text-yellow-500 transition-colors shrink-0 hidden sm:block">
                             <GripVertical className="w-5 h-5" />
                           </div>
-                          <div className="p-2 bg-slate-950 rounded-lg text-yellow-500 border border-slate-800">
+                          <div className="p-2 bg-slate-950 rounded-lg text-yellow-500 border border-slate-800 shrink-0">
                             <Icon className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-white truncate">{link.title}</h3>
-                            <p className="text-xs text-slate-400 truncate">{link.url}</p>
+                            <h3 className="font-bold text-white truncate text-sm md:text-base">{link.title}</h3>
+                            <p className="text-[10px] md:text-xs text-slate-400 truncate">{link.url}</p>
                           </div>
                       </div>
                       
-                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => startEditing(link)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">
                             <Pencil className="w-4 h-4" />
                           </button>
