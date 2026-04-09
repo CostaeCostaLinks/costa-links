@@ -24,7 +24,6 @@ export default function LinksPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [showIcons, setShowIcons] = useState(false);
 
-  // --- REFS PARA O DRAG AND DROP ---
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
@@ -84,16 +83,16 @@ export default function LinksPage() {
     toast.success('Link copiado!');
   };
 
-  // --- FUNÇÃO DE REORDENAÇÃO (DRAG AND DROP) ---
   const handleSort = async () => {
     if (dragItem.current === null || dragOverItem.current === null) return;
-    if (dragItem.current === dragOverItem.current) return;
+    if (dragItem.current === dragOverItem.current) return; 
 
     const _links = [...links];
     const draggedItemContent = _links.splice(dragItem.current, 1)[0];
     _links.splice(dragOverItem.current, 0, draggedItemContent);
 
     const updatedLinks = _links.map((link, index) => ({ ...link, order_index: index }));
+    
     setLinks(updatedLinks);
     triggerPreviewRefresh();
 
@@ -117,28 +116,28 @@ export default function LinksPage() {
   const publicUrl = `${window.location.origin}/u/${username}`;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+    // CORREÇÃO 1: Adicionado max-w-full e min-w-0 no container principal
+    <div className="space-y-6 animate-in fade-in duration-500 pb-20 w-full max-w-full min-w-0">
       
       <OnboardingProgress profile={profile} linkCount={links.length} />
 
-      {/* BANNER LINK PÚBLICO (Corrigido para truncar no mobile) */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-3 flex flex-col sm:flex-row items-center justify-between shadow-2xl shadow-black/20 gap-3 sm:gap-0">
-         <div className="flex items-center gap-3 flex-1 min-w-0 w-full">
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-2 pl-4 flex flex-col sm:flex-row items-center justify-between shadow-2xl shadow-black/20 gap-4 sm:gap-0">
+         <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
              <div className="p-2.5 bg-yellow-500/10 rounded-full text-yellow-500 shrink-0"><LinkIcon className="w-5 h-5" /></div>
-             <div className="flex flex-col min-w-0 flex-1">
+             <div className="flex flex-col min-w-0">
                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Seu Link Público</span>
                  <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-white font-bold truncate hover:underline text-sm md:text-base">{publicUrl}</a>
              </div>
          </div>
-         <button onClick={copyToClipboard} className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-yellow-500/10 shrink-0 mt-3 sm:mt-0 sm:ml-2">
+         <button onClick={copyToClipboard} className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-yellow-500/10 sm:ml-2 shrink-0">
              <Copy className="w-4 h-4" /> <span className="hidden sm:inline">Copiar</span> <span className="sm:hidden">Copiar Link</span>
          </button>
       </div>
 
-      <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-start relative">
+      <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-start relative w-full">
         
-        {/* COLUNA ESQUERDA: EDITOR */}
-        <div className="space-y-6">
+        {/* CORREÇÃO 2: A Mágica do min-w-0 na coluna principal */}
+        <div className="space-y-6 min-w-0 w-full">
             
             <div className="flex p-1 bg-slate-900/50 rounded-xl w-full border border-slate-800/50">
                 <button className="flex-1 py-3 rounded-lg bg-yellow-500 text-slate-900 font-bold text-sm shadow-lg transition-all">
@@ -152,7 +151,7 @@ export default function LinksPage() {
             {!isFormOpen && (<button onClick={() => setIsFormOpen(true)} className="w-full py-4 rounded-3xl bg-slate-900 border-2 border-dashed border-slate-800 text-slate-300 font-bold text-lg hover:border-yellow-500 hover:text-yellow-500 shadow-sm flex items-center justify-center gap-2 transition-all group"><Plus className="w-6 h-6 group-hover:scale-110 transition-transform" /> Adicionar Link</button>)}
 
             {isFormOpen && (
-                <div className="glass-card bg-slate-900/80 border border-slate-800 p-6 rounded-3xl animate-in slide-in-from-top-4">
+                <div className="glass-card bg-slate-900/80 border border-slate-800 p-6 rounded-3xl animate-in slide-in-from-top-4 min-w-0">
                 <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-bold text-white">{editingId ? 'Editar Link' : 'Novo Link'}</h2><button onClick={resetForm} className="text-slate-400 hover:text-white"><X className="w-6 h-6" /></button></div>
                 <form onSubmit={handleSaveLink} className="space-y-5">
                     <div className="space-y-4"><Input label="Título" placeholder="Ex: Meu Instagram" value={newLink.title} onChange={(e) => setNewLink({ ...newLink, title: e.target.value })} className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 focus:border-yellow-500" /><Input label="URL" placeholder="https://..." value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })} className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 focus:border-yellow-500" /></div>
@@ -162,7 +161,7 @@ export default function LinksPage() {
                 </div>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-3 min-w-0">
                 {links.map((link, index) => {
                 const Icon = getIconComponent(link.icon || 'link');
                 return (
@@ -173,27 +172,27 @@ export default function LinksPage() {
                       onDragEnter={() => (dragOverItem.current = index)}
                       onDragEnd={handleSort}
                       onDragOver={(e) => e.preventDefault()}
-                      className="group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm hover:border-yellow-500/50 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing gap-2"
+                      className="group bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm hover:border-yellow-500/50 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing gap-3"
                     >
-                      {/* CARD DO LINK (Corrigido para truncar corretamente e não estourar a tela) */}
-                      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                      {/* CORREÇÃO 3: overflow-hidden no bloco de texto para forçar o truncate */}
+                      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0 overflow-hidden">
                           <div className="text-slate-500 group-hover:text-yellow-500 transition-colors shrink-0 hidden sm:block">
                             <GripVertical className="w-5 h-5" />
                           </div>
                           <div className="p-2 bg-slate-950 rounded-lg text-yellow-500 border border-slate-800 shrink-0">
                             <Icon className="w-5 h-5" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-white truncate text-sm md:text-base">{link.title}</h3>
-                            <p className="text-[10px] md:text-xs text-slate-400 truncate">{link.url}</p>
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <h3 className="font-bold text-white truncate w-full block text-sm md:text-base">{link.title}</h3>
+                            <p className="text-[10px] md:text-xs text-slate-400 truncate w-full block">{link.url}</p>
                           </div>
                       </div>
                       
                       <div className="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => startEditing(link)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">
+                          <button onClick={() => startEditing(link)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg shrink-0">
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDelete(link.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg">
+                          <button onClick={() => handleDelete(link.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg shrink-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
                       </div>
@@ -203,8 +202,7 @@ export default function LinksPage() {
             </div>
         </div>
 
-        {/* 3. PREVIEW */}
-        <div className="hidden lg:block sticky top-8">
+        <div className="hidden lg:block sticky top-8 min-w-0">
             <div className="mockup-phone border-8 border-slate-950 rounded-[3rem] overflow-hidden w-[350px] h-[700px] shadow-2xl bg-slate-950 relative ring-1 ring-slate-800 mx-auto">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-950 rounded-b-xl z-20"></div>
                 {profile && <PreviewPhone profile={profile} links={links} />}
