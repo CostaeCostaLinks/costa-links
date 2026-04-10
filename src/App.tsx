@@ -21,6 +21,7 @@ import Pricing from '@/pages/site/Pricing';     // Ajuste o caminho se tiver mov
 import Features from '@/pages/Features';
 import Help from '@/pages/Help'; // Importe a nova página
 import BlogPost from '@/pages/BlogPost'; 
+import SalesPage from '@/pages/SalesPage';
 
 // 4. Páginas Administrativas
 import LinksPage from '@/pages/admin/LinksPage';
@@ -57,9 +58,11 @@ function App() {
              <Route path="/templates" element={<Templates />} />
              <Route path="/features" element={<Features />} />
              
+             
              {/* Rotas do Blog Público */}
              <Route path="/ajuda" element={<Help />} />
              <Route path="/blog/:slug" element={<BlogPost />} />
+             <Route path="/vendas" element={<SalesPage />} />
           </Route>
 
           {/* --- AUTENTICAÇÃO --- */}

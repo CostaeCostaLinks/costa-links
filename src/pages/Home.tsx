@@ -55,7 +55,7 @@ export default function Home() {
         {/* Badge Animado */}
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-yellow-400 px-4 py-1.5 rounded-full text-xs font-bold mb-8 shadow-lg backdrop-blur-md hover:bg-white/10 transition-all cursor-default ring-1 ring-yellow-500/20 animate-fade-in-up">
           <Sparkles className="w-3 h-3 animate-pulse" />
-          <span className="tracking-wide uppercase">Nova Experiência Costa VAP</span>
+          <span className="tracking-wide uppercase">Nova Experiência Costa Links</span>
         </div>
 
         {/* Título Principal */}
@@ -66,8 +66,21 @@ export default function Home() {
 
         <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
           A ferramenta definitiva para profissionais que buscam autoridade. 
-          Centralize cursos, mentorias e redes sociais em uma página de alta conversão.
+          Descubra como profissionais de alta performance estão transformando cliques em vendas com páginas de links <b>Premium</b>, feitas em 2 minutos.
         </p>
+
+         {/* VÍDEO DO YOUTUBE EMBUTIDO E RESPONSIVO */}
+          <div className="w-full max-w-3xl mx-auto aspect-video bg-slate-900 border border-white/10 rounded-2xl shadow-2xl relative overflow-hidden mb-12 flex items-center justify-center ring-1 ring-white/5">
+            <iframe 
+              src="https://www.youtube.com/embed/sSiM-VP6WLU?si=6bJbpo_wZuNr7Rlr&rel=0" 
+              title="YouTube video player" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              referrerPolicy="strict-origin-when-cross-origin" 
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full object-cover"
+            ></iframe>
+          </div>
 
         {/* Botões de Ação */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -77,7 +90,7 @@ export default function Home() {
           >
             <div className="absolute inset-0 w-full h-full bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -translate-x-full"></div>
             <span className="relative flex items-center gap-2">
-              Começar Agora <Zap className="w-5 h-5 fill-slate-900" />
+              Quero Criar Minha Página Grátis <Zap className="w-5 h-5 fill-slate-900" />
             </span>
           </button>
           
@@ -90,9 +103,34 @@ export default function Home() {
           </button>
         </div>
       </section>
+      
+      {/* --- 2. SEÇÃO DE AGITAÇÃO DE DOR (Por que mudar?) --- */}
+      <section className="py-16 relative z-10 border-y border-white/5 bg-slate-900/30">
+        <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-12 max-w-4xl mx-auto">
+                <div className="text-center md:text-right flex-1">
+                    <h3 className="text-2xl font-bold text-slate-400 mb-2">O seu link atual:</h3>
+                    <ul className="space-y-2 text-slate-500 inline-block text-left">
+                        <li className="flex items-center gap-2">❌ Design igual ao de todo mundo</li>
+                        <li className="flex items-center gap-2">❌ Sem identidade visual da sua marca</li>
+                        <li className="flex items-center gap-2">❌ Fundo cinza e sem graça</li>
+                    </ul>
+                </div>
+                <div className="w-px h-24 bg-white/10 hidden md:block"></div>
+                <div className="text-center md:text-left flex-1">
+                    <h3 className="text-2xl font-bold text-yellow-500 mb-2">Com o Costa Links:</h3>
+                    <ul className="space-y-2 text-slate-300 inline-block text-left">
+                        <li className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-500"/> Banners Imersivos no topo</li>
+                        <li className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-500"/> Botões com Gradientes e Bordas</li>
+                        <li className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-500"/> Cores e Fontes da sua marca</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+      </section>
 
       {/* --- MOCKUP INTERATIVO (Section de Profundidade) --- */}
-      <section className="container mx-auto px-4 pb-32 relative z-10">
+      <section className="container mx-auto px-4 pb-32 relative z-10 mt-16">
         <div className="relative glass-card rounded-[3rem] p-8 md:p-20 overflow-hidden shadow-2xl ring-1 ring-white/10 group">
           
           {/* Luz de destaque interna */}
@@ -173,7 +211,7 @@ export default function Home() {
       </section>
 
       {/* --- GRID DE FUNCIONALIDADES (Bento Grid Style) --- */}
-      <section className="bg-[#020617] py-24 relative z-10">
+      <section className="bg-[#020617] py-24 relative z-10 border-t border-white/5">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">Poder de agência,<br/>simplicidade de app.</h2>
@@ -197,10 +235,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+      
+      {/* 3. FECHAMENTO E ESCASSEZ */}
+      <section className="py-24 px-4 text-center">
+        <div className="max-w-3xl mx-auto">
+          <Zap className="w-12 h-12 text-yellow-500 mx-auto mb-6" />
+          <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-6">
+            Dê o próximo passo na sua carreira hoje.
+          </h2>
+          <p className="text-xl text-slate-400 mb-10">
+            Junte-se a corretores, advogados e criadores que já abandonaram o amadorismo. É rápido, fácil e não custa nada para começar.
+          </p>
+          
+          <button 
+            onClick={() => navigate('/register')}
+            className="w-full sm:w-auto px-12 py-5 bg-yellow-500 text-slate-900 rounded-full font-bold text-xl shadow-2xl hover:scale-105 transition-transform"
+          >
+            Começar Gratuitamente
+          </button>
+        </div>
+      </section>
 
       {/* Footer Minimalista */}
       <footer className="border-t border-white/5 py-12 text-center relative z-10 bg-slate-950">
-        <p className="text-slate-600 text-sm">© 2025 Costa Links. Elevando o padrão.</p>
+        <p className="text-slate-600 text-sm">© 2026 Costa Links. Elevando o padrão.</p>
       </footer>
 
     </div>
